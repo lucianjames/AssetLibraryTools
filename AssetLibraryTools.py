@@ -1,6 +1,6 @@
 bl_info = {
     "name": "AssetLibraryTools",
-    "description": "Set of tools to speed up the creation of asset libraries with the asset browser introduced in blender 3.0",
+    "description": "Set of tools to speed up the creation of asset libraries for the asset browser introduced in blender 3.0",
     "author": "Lucian James (LJ3D)",
     "version": (0, 0, 3),
     "blender": (3, 0, 0),
@@ -8,7 +8,7 @@ bl_info = {
     "warning": "", # used for warning icon and text in addons panel
     "wiki_url": "",
     "tracker_url": "",
-    "category": ""
+    "category": "3D View"
 }
 
 import bpy
@@ -249,7 +249,23 @@ class properties(PropertyGroup):
         default = True
         )
     
-    expanded : BoolProperty(
+    matImport_expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
+    
+    importOptions_expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
+    utilRow_expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
+    batchOpsRow_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
@@ -363,43 +379,65 @@ class OBJECT_PT_panel(Panel):
         tool = scene.assetlibrarytools
         obj = context.scene.assetlibrarytools
         
-        box1 = layout.box()
-        box1.label(text="Batch import PBR texture sets as simple materials")
-        box1.prop(tool, "pbr_import_path")
-        box1.operator("alt.importpbrtexturesets")
-        row1 = box1.row()
-        row1.prop(obj, "expanded",
-            icon="TRIA_DOWN" if obj.expanded else "TRIA_RIGHT",
+        pbrImportBox = layout.box()
+        pbrImportRow = pbrImportBox.row()
+        pbrImportRow.prop(obj, "matImport_expanded",
+            icon="TRIA_DOWN" if obj.matImport_expanded else "TRIA_RIGHT",
             icon_only=True, emboss=False
         )
-        row1.label(text="Import options: ")
-        if obj.expanded:
-            row1 = box1.row()
-            box1.label(text="Material settings:")
-            box1.prop(tool, "use_fake_user")
-            box1.prop(tool, "use_real_displacement")
-            box1.label(text="Import following textures into materials (if found):")
-            box1.prop(tool, "import_diff")
-            box1.prop(tool, "import_rough")
-            box1.prop(tool, "import_norm")
-            box1.prop(tool, "import_disp")
-        layout.separator()
+        pbrImportRow.label(text="Batch import PBR texture sets as simple materials")
+        if obj.matImport_expanded:
+            pbrImportBox.prop(tool, "pbr_import_path")
+            pbrImportBox.operator("alt.importpbrtexturesets")
+            importOptionsRow = pbrImportBox.row()
+            importOptionsRow.prop(obj, "importOptions_expanded",
+                icon="TRIA_DOWN" if obj.importOptions_expanded else "TRIA_RIGHT",
+                icon_only=True, emboss=False
+            )
+            importOptionsRow.label(text="Import options: ")
+            if obj.importOptions_expanded:
+                importOptionsRow = pbrImportBox.row()
+                pbrImportBox.label(text="Material settings:")
+                pbrImportBox.prop(tool, "use_fake_user")
+                pbrImportBox.prop(tool, "use_real_displacement")
+                pbrImportBox.label(text="Import following textures into materials (if found):")
+                pbrImportBox.prop(tool, "import_diff")
+                pbrImportBox.prop(tool, "import_rough")
+                pbrImportBox.prop(tool, "import_norm")
+                pbrImportBox.prop(tool, "import_disp")
         
-        box2 = layout.box()
-        box2.label(text="Batch mark/clear operations")
-        box2.operator("alt.markallmaterialssasassets")
-        box2.operator("alt.clearmaterialassets")
-        box2.separator()
-        box2.operator("alt.markallmeshesasassets")
-        box2.operator("alt.clearmeshassets")
-        box2.separator()
-        box2.operator("alt.markallobjectsasassets")
-        box2.operator("alt.clearobjectassets")
-        layout.separator()
+        batchOpBox = layout.box()
+        batchOpsRow = batchOpBox.row()
+        batchOpsRow.prop(obj, "batchOpsRow_expanded",
+            icon="TRIA_DOWN" if obj.batchOpsRow_expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False
+        )
+        batchOpsRow.label(text="Batch mark/clear operations")
+        if obj.batchOpsRow_expanded:
+            batchOpsRow = batchOpBox.row()
+            batchOpBox.label(text="Batch mark/clear operations")
+            batchOpBox.operator("alt.markallmaterialssasassets")
+            batchOpBox.operator("alt.clearmaterialassets")
+            batchOpBox.separator()
+            batchOpBox.operator("alt.markallmeshesasassets")
+            batchOpBox.operator("alt.clearmeshassets")
+            batchOpBox.separator()
+            batchOpBox.operator("alt.markallobjectsasassets")
+            batchOpBox.operator("alt.clearobjectassets")
         
-        box3 = layout.box()
-        box3.label(text="Random utilities")
-        box3.operator("alt.deleteallmaterials")
+        utilBox = layout.box()
+        utilRow = utilBox.row()
+        utilRow.prop(obj, "utilRow_expanded",
+            icon="TRIA_DOWN" if obj.utilRow_expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False
+        )
+        utilRow.label(text="Random utilities")
+        if obj.utilRow_expanded:
+            utilRow = utilBox.row()
+            utilBox.operator("alt.deleteallmaterials")
+        
+        
+        
 
 
 # ------------------------------------------------------------------------
