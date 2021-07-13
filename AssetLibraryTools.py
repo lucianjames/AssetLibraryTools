@@ -199,7 +199,6 @@ class createPBR():
             nodes.remove(node_imTexDisplacement)
             nodes.remove(node_displacement)
         
-        
         return mat
 
 
@@ -217,6 +216,7 @@ class properties(PropertyGroup):
         subtype = 'DIR_PATH'
         )
     
+    
     use_fake_user : BoolProperty(
         name = "Use fake user",
         description = "Use fake user on imported materials",
@@ -227,7 +227,8 @@ class properties(PropertyGroup):
         description = "Enable real geometry displacement in the material settings (cycles only)",
         default = False
         )
-        
+    
+    
     import_diff : BoolProperty(
         name = "Import diffuse",
         description = "",
@@ -249,23 +250,23 @@ class properties(PropertyGroup):
         default = True
         )
     
+    
     matImport_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
         )
-    
     importOptions_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
         )
-    utilRow_expanded : BoolProperty(
+    batchOpsRow_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
         )
-    batchOpsRow_expanded : BoolProperty(
+    utilRow_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
@@ -290,8 +291,7 @@ class OT_ImportPbrTextureSets(Operator):
             if tool.use_fake_user == True:
                 mat.use_fake_user = True
             if tool.use_real_displacement == True:
-                mat.cycles.displacement_method = 'BOTH'
-                
+                mat.cycles.displacement_method = 'BOTH'       
         return{'FINISHED'}
 
 class OT_MarkAllMaterialsAsAssets(Operator):
@@ -365,9 +365,10 @@ class OT_DeleteAllMaterials(Operator):
 class OBJECT_PT_panel(Panel):
     bl_label = "AssetLibraryTools"
     bl_idname = "OBJECT_PT_assetlibrarytools_panel"
+    bl_category = "AssetLibraryTools"
     bl_space_type = "VIEW_3D"   
     bl_region_type = "UI"
-    bl_category = "AssetLibraryTools"
+    
     
     @classmethod
     def poll(self,context):
@@ -435,9 +436,6 @@ class OBJECT_PT_panel(Panel):
         if obj.utilRow_expanded:
             utilRow = utilBox.row()
             utilBox.operator("alt.deleteallmaterials")
-        
-        
-        
 
 
 # ------------------------------------------------------------------------
