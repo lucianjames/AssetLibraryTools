@@ -90,6 +90,8 @@ class createPBR():
     
     def simple(name, files):
         
+        tool = bpy.context.scene.assetlibrarytools
+        
         # Create a new material
         mat = bpy.data.materials.new(name)
         mat.use_nodes = True
@@ -164,19 +166,22 @@ class createPBR():
         '''check if texture is loaded
             if not loaded, delete relevant node(s)
             if loaded, place texture in relevant texture node and link relevant nodes'''
-        if diffuseTexture != None:
+            
+        if diffuseTexture != None and tool.import_diff != False:
             node_imTexDiffuse.image = diffuseTexture
             links.new(node_imTexDiffuse.outputs[0], node_principled.inputs[0])
             links.new(node_mapping.outputs[0], node_imTexDiffuse.inputs[0])
         else:
             nodes.remove(node_imTexDiffuse)
-        if roughnessTexture != None:
+            
+        if roughnessTexture != None and tool.import_rough != False:
             node_imTexRoughness.image = roughnessTexture
             links.new(node_imTexRoughness.outputs[0], node_principled.inputs[7])
             links.new(node_mapping.outputs[0], node_imTexRoughness.inputs[0])
         else:
             nodes.remove(node_imTexRoughness)
-        if normalTexture != None:
+            
+        if normalTexture != None and tool.import_norm != False:
             node_imTexNormal.image = normalTexture
             links.new(node_imTexNormal.outputs[0], node_normalMap.inputs[1])
             links.new(node_normalMap.outputs[0], node_principled.inputs[20])
@@ -184,7 +189,8 @@ class createPBR():
         else:
             nodes.remove(node_imTexNormal)
             nodes.remove(node_normalMap)
-        if displacementTexture != None:
+            
+        if displacementTexture != None and tool.import_disp != False:
             node_imTexDisplacement.image = displacementTexture
             links.new(node_imTexDisplacement.outputs[0], node_displacement.inputs[0])
             links.new(node_displacement.outputs[0], node_output.inputs[2])
@@ -203,7 +209,7 @@ class createPBR():
 
 class properties(PropertyGroup):
     
-    pbr_import_path: StringProperty(
+    pbr_import_path : StringProperty(
         name = "Import directory",
         description = "Choose a directory to batch import PBR texture sets from.\nFormat your files like this: ChosenDirectory/PBRTextureName/textureFiles",
         default = "",
@@ -211,12 +217,43 @@ class properties(PropertyGroup):
         subtype = 'DIR_PATH'
         )
     
-    use_fake_user: BoolProperty(
+    use_fake_user : BoolProperty(
         name = "Use fake user",
         description = "Use fake user on imported materials",
         default = True
         )
-
+    use_real_displacement : BoolProperty(
+        name = "Use real displacement",
+        description = "Enable real geometry displacement in the material settings (cycles only)",
+        default = False
+        )
+        
+    import_diff : BoolProperty(
+        name = "Import diffuse",
+        description = "",
+        default = True
+        )
+    import_rough : BoolProperty(
+        name = "Import roughness",
+        description = "",
+        default = True
+        )
+    import_norm : BoolProperty(
+        name = "Import normal",
+        description = "",
+        default = True
+        )
+    import_disp : BoolProperty(
+        name = "Import displacement",
+        description = "",
+        default = True
+        )
+    
+    expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
 
 # ------------------------------------------------------------------------
 #    Operators
@@ -236,7 +273,9 @@ class OT_ImportPbrTextureSets(Operator):
             mat = createPBR.simple(sd.name, filePaths)
             if tool.use_fake_user == True:
                 mat.use_fake_user = True
-        
+            if tool.use_real_displacement == True:
+                mat.cycles.displacement_method = 'BOTH'
+                
         return{'FINISHED'}
 
 class OT_MarkAllMaterialsAsAssets(Operator):
@@ -302,18 +341,6 @@ class OT_DeleteAllMaterials(Operator):
             bpy.data.materials.remove(mat)
         return {'FINISHED'}
 
-class OT_testOperator(Operator):
-    bl_label = "Debug operator"
-    bl_idname = "alt.testoperator"
-
-    def execute(self, context):
-        scene = context.scene
-        tool = scene.assetlibrarytools
-        
-        print("pbr_import_path:", tool.pbr_import_path)
-        print("pbr_template_enum:", tool.pbr_template_enum)
-        return {'FINISHED'}
-
 
 # ------------------------------------------------------------------------
 #    Panel in Object Mode
@@ -325,22 +352,37 @@ class OBJECT_PT_panel(Panel):
     bl_space_type = "VIEW_3D"   
     bl_region_type = "UI"
     bl_category = "AssetLibraryTools"
-    bl_context = "objectmode"   
     
     @classmethod
     def poll(self,context):
-        return context.object is not None
+        return context.mode
 
     def draw(self, context):
         layout = self.layout
         scene = context.scene
         tool = scene.assetlibrarytools
+        obj = context.scene.assetlibrarytools
         
         box1 = layout.box()
         box1.label(text="Batch import PBR texture sets as simple materials")
         box1.prop(tool, "pbr_import_path")
-        box1.prop(tool, "use_fake_user")
         box1.operator("alt.importpbrtexturesets")
+        row1 = box1.row()
+        row1.prop(obj, "expanded",
+            icon="TRIA_DOWN" if obj.expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False
+        )
+        row1.label(text="Import options: ")
+        if obj.expanded:
+            row1 = box1.row()
+            box1.label(text="Material settings:")
+            box1.prop(tool, "use_fake_user")
+            box1.prop(tool, "use_real_displacement")
+            box1.label(text="Import following textures into materials (if found):")
+            box1.prop(tool, "import_diff")
+            box1.prop(tool, "import_rough")
+            box1.prop(tool, "import_norm")
+            box1.prop(tool, "import_disp")
         layout.separator()
         
         box2 = layout.box()
@@ -356,8 +398,7 @@ class OBJECT_PT_panel(Panel):
         layout.separator()
         
         box3 = layout.box()
-        box3.label(text="Some random extra operations")
-        box3.operator("alt.testoperator")
+        box3.label(text="Random utilities")
         box3.operator("alt.deleteallmaterials")
 
 
@@ -375,7 +416,6 @@ classes = (
     OT_MarkAllObjectsAsAssets,
     OT_ClearObjectAssets,
     OT_DeleteAllMaterials,
-    OT_testOperator,
     OBJECT_PT_panel
 )
 
