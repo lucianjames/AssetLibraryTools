@@ -327,57 +327,36 @@ class OT_ImportModels(Operator):
     def execute(self, context):
         scene = context.scene
         tool = scene.assetlibrarytools
-        
+        old_objects = set(context.scene.objects)
         p = pathlib.Path(str(tool.model_import_path))
-        
         # Import FBX files
         if tool.import_fbx == True:
             fbxFilePaths = [x for x in p.glob('**/*.fbx') if x.is_file()]
-            old_objects = set(context.scene.objects)
             for filePath in fbxFilePaths:
                 bpy.ops.import_scene.fbx(filepath=str(filePath))
-            imported_objects = set(context.scene.objects) - old_objects
-            if tool.hide_after_import == True:
-                for object in imported_objects:
-                    object.hide_set(True)
-        
         # Import GLTF files
         if tool.import_gltf == True:
             gltfFilePaths = [x for x in p.glob('**/*.gltf') if x.is_file()]
-            old_objects = set(context.scene.objects)
             for filePath in gltfFilePaths:
                 bpy.ops.import_scene.gltf(filepath=str(filePath))
-            imported_objects = set(context.scene.objects) - old_objects
-            if tool.hide_after_import == True:
-                for object in imported_objects:
-                    object.hide_set(True)
-        
         # Import OBJ files
         if tool.import_obj == True:
             objFilePaths = [x for x in p.glob('**/*.obj') if x.is_file()]
-            old_objects = set(context.scene.objects)
             for filePath in objFilePaths:
                 bpy.ops.import_scene.obj(filepath=str(filePath))
-            imported_objects = set(context.scene.objects) - old_objects
-            if tool.hide_after_import == True:
-                for object in imported_objects:
-                    object.hide_set(True)
-        
         # Import X3D files
         if tool.import_x3d == True:
             x3dFilePaths = [x for x in p.glob('**/*.x3d') if x.is_file()]
-            old_objects = set(context.scene.objects)
             for filePath in x3dFilePaths:
                 bpy.ops.import_scene.x3d(filepath=str(filePath))
-            imported_objects = set(context.scene.objects) - old_objects
-            if tool.hide_after_import == True:
-                for object in imported_objects:
-                    object.hide_set(True)
-        
-        # Import PLY files
-        
-        # Import STL files
-        
+        '''
+        Hide objects after importing them if user wants
+        Hiding them individually straight after import might be a better idea
+        '''
+        imported_objects = set(context.scene.objects) - old_objects
+        if tool.hide_after_import == True:
+            for object in imported_objects:
+                object.hide_set(True)
         return{'FINISHED'}
 
 class OT_ImportPbrTextureSets(Operator):
