@@ -440,6 +440,15 @@ class OT_DeleteAllMaterials(Operator):
             bpy.data.materials.remove(mat)
         return {'FINISHED'}
 
+class OT_DeleteAllObjects(Operator):
+    bl_label = "Delete all objects"
+    bl_idname = "alt.deleteallobjects"
+    
+    def execute(self, context):
+        for object in bpy.data.objects:
+            bpy.data.objects.remove(object)
+        return {'FINISHED'}
+
 
 # ------------------------------------------------------------------------
 #    Panel in Object Mode
@@ -554,6 +563,7 @@ class OBJECT_PT_panel(Panel):
         if obj.utilRow_expanded:
             utilRow = utilBox.row()
             utilBox.operator("alt.deleteallmaterials")
+            utilBox.operator("alt.deleteallobjects")
 
 
 # ------------------------------------------------------------------------
@@ -571,6 +581,7 @@ classes = (
     OT_MarkAllObjectsAsAssets,
     OT_ClearObjectAssets,
     OT_DeleteAllMaterials,
+    OT_DeleteAllObjects,
     OBJECT_PT_panel
 )
 
