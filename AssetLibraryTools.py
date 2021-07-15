@@ -203,20 +203,28 @@ class createPBR():
 
 
 # ------------------------------------------------------------------------
-#    Scene Properties
+#    Properties
 # ------------------------------------------------------------------------ 
 
 class properties(PropertyGroup):
     
-    pbr_import_path : StringProperty(
+    # Import paths
+    mat_import_path : StringProperty(
         name = "Import directory",
         description = "Choose a directory to batch import PBR texture sets from.\nFormat your files like this: ChosenDirectory/PBRTextureName/textureFiles",
         default = "",
         maxlen = 1024,
         subtype = 'DIR_PATH'
         )
+    model_import_path : StringProperty(
+        name = "Import directory",
+        description = "Choose a directory to batch import models from",
+        default = "",
+        maxlen = 1024,
+        subtype = 'DIR_PATH'
+        )
     
-    
+    # Material import options
     use_fake_user : BoolProperty(
         name = "Use fake user",
         description = "Use fake user on imported materials",
@@ -227,8 +235,6 @@ class properties(PropertyGroup):
         description = "Enable real geometry displacement in the material settings (cycles only)",
         default = False
         )
-    
-    
     import_diff : BoolProperty(
         name = "Import diffuse",
         description = "",
@@ -250,13 +256,50 @@ class properties(PropertyGroup):
         default = True
         )
     
+    # Model import properties
+    hide_after_import : BoolProperty(
+        name = "Hide models after they are imported",
+        description = "Reduces viewport polycount, prevents low framerate/crashes",
+        default = False
+        )
+    import_fbx : BoolProperty(
+        name = "Import FBX files",
+        description = "",
+        default = True
+        )
+    import_gltf : BoolProperty(
+        name = "Import GLTF files",
+        description = "",
+        default = True
+        )
+    import_obj : BoolProperty(
+        name = "Import OBJ files",
+        description = "",
+        default = True
+        )
+    import_x3d : BoolProperty(
+        name = "Import X3D files",
+        description = "",
+        default = True
+        )
     
+    # UI properties
     matImport_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
         )
-    importOptions_expanded : BoolProperty(
+    matImportOptions_expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
+    modelImport_expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
+    modelImportOptions_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
@@ -272,9 +315,70 @@ class properties(PropertyGroup):
         default = False
         )
 
+
 # ------------------------------------------------------------------------
 #    Operators
 # ------------------------------------------------------------------------
+
+class OT_ImportModels(Operator):
+    bl_label = "Import models"
+    bl_idname = "alt.importmodels"
+    
+    def execute(self, context):
+        scene = context.scene
+        tool = scene.assetlibrarytools
+        
+        p = pathlib.Path(str(tool.model_import_path))
+        
+        # Import FBX files
+        if tool.import_fbx == True:
+            fbxFilePaths = [x for x in p.glob('**/*.fbx') if x.is_file()]
+            old_objects = set(context.scene.objects)
+            for filePath in fbxFilePaths:
+                bpy.ops.import_scene.fbx(filepath=str(filePath))
+            imported_objects = set(context.scene.objects) - old_objects
+            if tool.hide_after_import == True:
+                for object in imported_objects:
+                    object.hide_set(True)
+        
+        # Import GLTF files
+        if tool.import_gltf == True:
+            gltfFilePaths = [x for x in p.glob('**/*.gltf') if x.is_file()]
+            old_objects = set(context.scene.objects)
+            for filePath in gltfFilePaths:
+                bpy.ops.import_scene.gltf(filepath=str(filePath))
+            imported_objects = set(context.scene.objects) - old_objects
+            if tool.hide_after_import == True:
+                for object in imported_objects:
+                    object.hide_set(True)
+        
+        # Import OBJ files
+        if tool.import_obj == True:
+            objFilePaths = [x for x in p.glob('**/*.obj') if x.is_file()]
+            old_objects = set(context.scene.objects)
+            for filePath in objFilePaths:
+                bpy.ops.import_scene.obj(filepath=str(filePath))
+            imported_objects = set(context.scene.objects) - old_objects
+            if tool.hide_after_import == True:
+                for object in imported_objects:
+                    object.hide_set(True)
+        
+        # Import X3D files
+        if tool.import_x3d == True:
+            x3dFilePaths = [x for x in p.glob('**/*.x3d') if x.is_file()]
+            old_objects = set(context.scene.objects)
+            for filePath in x3dFilePaths:
+                bpy.ops.import_scene.x3d(filepath=str(filePath))
+            imported_objects = set(context.scene.objects) - old_objects
+            if tool.hide_after_import == True:
+                for object in imported_objects:
+                    object.hide_set(True)
+        
+        # Import PLY files
+        
+        # Import STL files
+        
+        return{'FINISHED'}
 
 class OT_ImportPbrTextureSets(Operator):
     bl_label = "Import PBR textures"
@@ -284,7 +388,7 @@ class OT_ImportPbrTextureSets(Operator):
         scene = context.scene
         tool = scene.assetlibrarytools
         
-        subdirectories = [x for x in pathlib.Path(tool.pbr_import_path).iterdir() if x.is_dir()]
+        subdirectories = [x for x in pathlib.Path(tool.mat_import_path).iterdir() if x.is_dir()]
         for sd in subdirectories:
             filePaths = [x for x in pathlib.Path(sd).iterdir() if x.is_file()]
             mat = createPBR.simple(sd.name, filePaths)
@@ -369,7 +473,6 @@ class OBJECT_PT_panel(Panel):
     bl_space_type = "VIEW_3D"   
     bl_region_type = "UI"
     
-    
     @classmethod
     def poll(self,context):
         return context.mode
@@ -380,33 +483,67 @@ class OBJECT_PT_panel(Panel):
         tool = scene.assetlibrarytools
         obj = context.scene.assetlibrarytools
         
-        pbrImportBox = layout.box()
-        pbrImportRow = pbrImportBox.row()
-        pbrImportRow.prop(obj, "matImport_expanded",
+        
+        # Material import UI
+        matImportBox = layout.box()
+        matImportRow = matImportBox.row()
+        matImportRow.prop(obj, "matImport_expanded",
             icon="TRIA_DOWN" if obj.matImport_expanded else "TRIA_RIGHT",
             icon_only=True, emboss=False
         )
-        pbrImportRow.label(text="Batch import PBR texture sets as simple materials")
+        matImportRow.label(text="Batch import PBR texture sets as simple materials")
         if obj.matImport_expanded:
-            pbrImportBox.prop(tool, "pbr_import_path")
-            pbrImportBox.operator("alt.importpbrtexturesets")
-            importOptionsRow = pbrImportBox.row()
-            importOptionsRow.prop(obj, "importOptions_expanded",
-                icon="TRIA_DOWN" if obj.importOptions_expanded else "TRIA_RIGHT",
+            matImportBox.prop(tool, "mat_import_path")
+            matImportBox.label(text='Make sure to uncheck "Relative Path"!')
+            matImportBox.operator("alt.importpbrtexturesets")
+            matImportOptionsRow = matImportBox.row()
+            matImportOptionsRow.prop(obj, "matImportOptions_expanded",
+                icon="TRIA_DOWN" if obj.matImportOptions_expanded else "TRIA_RIGHT",
                 icon_only=True, emboss=False
             )
-            importOptionsRow.label(text="Import options: ")
-            if obj.importOptions_expanded:
-                importOptionsRow = pbrImportBox.row()
-                pbrImportBox.label(text="Material settings:")
-                pbrImportBox.prop(tool, "use_fake_user")
-                pbrImportBox.prop(tool, "use_real_displacement")
-                pbrImportBox.label(text="Import following textures into materials (if found):")
-                pbrImportBox.prop(tool, "import_diff")
-                pbrImportBox.prop(tool, "import_rough")
-                pbrImportBox.prop(tool, "import_norm")
-                pbrImportBox.prop(tool, "import_disp")
+            matImportOptionsRow.label(text="Import options: ")
+            if obj.matImportOptions_expanded:
+                matImportOptionsRow = matImportBox.row()
+                matImportBox.label(text="Material settings:")
+                matImportBox.prop(tool, "use_fake_user")
+                matImportBox.prop(tool, "use_real_displacement")
+                matImportBox.label(text="Import following textures into materials (if found):")
+                matImportBox.prop(tool, "import_diff")
+                matImportBox.prop(tool, "import_rough")
+                matImportBox.prop(tool, "import_norm")
+                matImportBox.prop(tool, "import_disp")
         
+        
+        # Model import UI
+        modelImportBox = layout.box()
+        modelImportRow = modelImportBox.row()
+        modelImportRow.prop(obj, "modelImport_expanded",
+            icon="TRIA_DOWN" if obj.modelImport_expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False
+        )
+        modelImportRow.label(text="Batch import 3D models")
+        if obj.modelImport_expanded:
+            modelImportBox.prop(tool, "model_import_path")
+            modelImportBox.label(text='Make sure to uncheck "Relative Path"!')
+            modelImportBox.operator("alt.importmodels")
+            modelImportOptionsRow = modelImportBox.row()
+            modelImportOptionsRow.prop(obj, "modelImportOptions_expanded",
+                icon="TRIA_DOWN" if obj.modelImportOptions_expanded else "TRIA_RIGHT",
+                icon_only=True, emboss=False
+            )
+            modelImportOptionsRow.label(text="Import options: ")
+            if obj.modelImportOptions_expanded:
+                modelImportOptionsRow = modelImportBox.row()
+                modelImportBox.label(text="Model options:")
+                modelImportBox.prop(tool, "hide_after_import")
+                modelImportBox.label(text="Search for and import the following filetypes:")
+                modelImportBox.prop(tool, "import_fbx")
+                modelImportBox.prop(tool, "import_gltf")
+                modelImportBox.prop(tool, "import_obj")
+                modelImportBox.prop(tool, "import_x3d")
+        
+        
+        # Other batch operations UI
         batchOpBox = layout.box()
         batchOpsRow = batchOpBox.row()
         batchOpsRow.prop(obj, "batchOpsRow_expanded",
@@ -426,13 +563,15 @@ class OBJECT_PT_panel(Panel):
             batchOpBox.operator("alt.markallobjectsasassets")
             batchOpBox.operator("alt.clearobjectassets")
         
+        
+        # Utility operations UI
         utilBox = layout.box()
         utilRow = utilBox.row()
         utilRow.prop(obj, "utilRow_expanded",
             icon="TRIA_DOWN" if obj.utilRow_expanded else "TRIA_RIGHT",
             icon_only=True, emboss=False
         )
-        utilRow.label(text="Random utilities")
+        utilRow.label(text="Utilities")
         if obj.utilRow_expanded:
             utilRow = utilBox.row()
             utilBox.operator("alt.deleteallmaterials")
@@ -444,6 +583,7 @@ class OBJECT_PT_panel(Panel):
 
 classes = (
     properties,
+    OT_ImportModels,
     OT_ImportPbrTextureSets,
     OT_MarkAllMaterialsAsAssets,
     OT_ClearMaterialAssets,
