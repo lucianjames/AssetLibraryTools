@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "Set of tools to speed up the creation of asset libraries for the asset browser introduced in blender 3.0",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 0, 3),
+    "version": (0, 0, 4),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "", # used for warning icon and text in addons panel
@@ -12,8 +12,6 @@ bl_info = {
 }
 
 import bpy
-import pathlib
-import re
 from bpy.props import (StringProperty,
                        BoolProperty,
                        IntProperty,
@@ -27,6 +25,9 @@ from bpy.types import (Panel,
                        Operator,
                        PropertyGroup,
                        )
+import pathlib
+import re
+import os
 
 
 # ------------------------------------------------------------------------
@@ -81,14 +82,19 @@ def FindPBRTextureType(fname):
             PBRTT = "disp"
     return PBRTT
 
+def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
+    def draw(self, context):
+        self.layout.label(text=message)
+    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
+
 
 # ------------------------------------------------------------------------
 #    AssetLibraryTools PBR import class
 # ------------------------------------------------------------------------ 
 
-class createPBR():   
+class createPBR():
     
-    def simple(name, files):
+    def simplePrincipledSetup(name, files):
         
         tool = bpy.context.scene.assetlibrarytools
         
@@ -303,6 +309,56 @@ class properties(PropertyGroup):
         default = True
         )
     
+    # CC0AssetDownloader properties
+    downloader_save_path : StringProperty(
+        name = "Save location",
+        description = "Choose a directory to save assets to",
+        default = "",
+        maxlen = 1024,
+        subtype = 'DIR_PATH'
+        )
+    keywordFilter : StringProperty(
+        name = "Keyword filter",
+        description = "Enter a keyword to filter assets by, leave empty if you do not wish to filter.",
+        default = "",
+        maxlen = 1024,
+        )
+    attributeFilter : EnumProperty(
+        name="Attribute filter:",
+        description="Choose attribute to filter assets by",
+        items=[ ('None', "None", ""),
+                ('1K-JPG', "1K-JPG", ""),
+                ('2K-JPG', "2K-JPG", ""),
+                ('4K-JPG', "4K-JPG", ""),
+                ('8K-JPG', "8K-JPG", ""),
+                ('1K-PNG', "1K-PNG", ""),
+                ('2K-PNG', "2K-PNG", ""),
+                ('4K-PNG', "4K-PNG", ""),
+                ('8K-PNG', "8K-PNG", ""),
+               ]
+        )
+    extensionFilter : EnumProperty(
+        name="Extension filter:",
+        description="Choose file extension to filter assets by",
+        items=[ ('None', "None", ""),
+                ('zip', "ZIP", ""),
+                ('obj', "OBJ", ""),
+                ('exr', "EXR", ""),
+                ('sbsar', "SBSAR", ""),
+               ]
+        )
+    unZip : BoolProperty(
+        name = "Unzip downloaded zip files",
+        description = "",
+        default = True
+        )
+    deleteZips : BoolProperty(
+        name = "Delete zip files after they have been unzipped",
+        description = "",
+        default = True
+        )
+    
+    
     # UI properties
     matImport_expanded : BoolProperty(
         name = "Click to expand",
@@ -330,6 +386,11 @@ class properties(PropertyGroup):
         default = False
         )
     utilRow_expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
+    assetDownloaderRow_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
@@ -390,7 +451,7 @@ class OT_ImportPbrTextureSets(Operator):
         subdirectories = [x for x in pathlib.Path(tool.mat_import_path).iterdir() if x.is_dir()]
         for sd in subdirectories:
             filePaths = [x for x in pathlib.Path(sd).iterdir() if x.is_file()]
-            mat = createPBR.simple(sd.name, filePaths)
+            mat = createPBR.simplePrincipledSetup(sd.name, filePaths)
             if tool.use_fake_user == True:
                 mat.use_fake_user = True
             if tool.use_real_displacement == True:
@@ -469,6 +530,17 @@ class OT_DeleteAllObjects(Operator):
             bpy.data.objects.remove(object)
         return {'FINISHED'}
 
+class OT_AssetDownloaderOperator(Operator):
+    bl_label = "Run script"
+    bl_idname = "alt.assetdownloader"
+    
+    def execute(self, context):
+        tool = context.scene.assetlibrarytools
+        ur = bpy.utils.user_resource('SCRIPTS')
+        if tool.keywordFilter == "":
+            tool.keywordFilter = 'None'
+        os.system('start cmd /k \"cd /D {0} & python ALT_CC0AssetDownloader.py {1} {2} {3} {4} {5} {6}'.format(ur+'\\addons\\AssetLibraryTools', tool.downloader_save_path, tool.keywordFilter, tool.attributeFilter, tool.extensionFilter, str(tool.unZip), str(tool.deleteZips)))
+        return {'FINISHED'}
 
 # ------------------------------------------------------------------------
 #    Panel in Object Mode
@@ -585,7 +657,26 @@ class OBJECT_PT_panel(Panel):
             utilRow = utilBox.row()
             utilBox.operator("alt.deleteallmaterials")
             utilBox.operator("alt.deleteallobjects")
-
+            
+        
+        # Experimental asset downloader UI
+        assetDownloaderBox = layout.box()
+        assetDownloaderRow = assetDownloaderBox.row()
+        assetDownloaderRow.prop(obj, "assetDownloaderRow_expanded",
+            icon="TRIA_DOWN" if obj.assetDownloaderRow_expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False
+        )
+        assetDownloaderRow.label(text="Batch asset downloader [EXPERIMENTAL]")
+        if obj.assetDownloaderRow_expanded:
+            assetDownloaderRow = assetDownloaderBox.row()
+            assetDownloaderBox.prop(tool, "downloader_save_path")
+            assetDownloaderBox.prop(tool, "keywordFilter")
+            assetDownloaderBox.prop(tool, "attributeFilter")
+            assetDownloaderBox.prop(tool, "extensionFilter")
+            assetDownloaderBox.prop(tool, "unZip")
+            assetDownloaderBox.prop(tool, "deleteZips")
+            assetDownloaderBox.operator("alt.assetdownloader")
+            
 
 # ------------------------------------------------------------------------
 #    Registration
@@ -603,6 +694,7 @@ classes = (
     OT_ClearObjectAssets,
     OT_DeleteAllMaterials,
     OT_DeleteAllObjects,
+    OT_AssetDownloaderOperator,
     OBJECT_PT_panel
 )
 
@@ -611,7 +703,7 @@ def register():
     for cls in classes:
         register_class(cls)
     bpy.types.Scene.assetlibrarytools = PointerProperty(type=properties)
-
+    
 def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
