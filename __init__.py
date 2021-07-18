@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "Set of tools to speed up the creation of asset libraries for the asset browser introduced in blender 3.0",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 0, 4),
+    "version": (0, 0, 5),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "", # used for warning icon and text in addons panel
@@ -82,7 +82,7 @@ def FindPBRTextureType(fname):
             PBRTT = "disp"
     return PBRTT
 
-def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
+def DisplayMessageBox(message = "", title = "Info", icon = 'INFO'):
     def draw(self, context):
         self.layout.label(text=message)
     bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
@@ -410,26 +410,31 @@ class OT_ImportModels(Operator):
         tool = scene.assetlibrarytools
         old_objects = set(context.scene.objects)
         p = pathlib.Path(str(tool.model_import_path))
+        i = 0
         # Import FBX files
         if tool.import_fbx == True:
             fbxFilePaths = [x for x in p.glob('**/*.fbx') if x.is_file()]
             for filePath in fbxFilePaths:
                 bpy.ops.import_scene.fbx(filepath=str(filePath))
+                i += 1
         # Import GLTF files
         if tool.import_gltf == True:
             gltfFilePaths = [x for x in p.glob('**/*.gltf') if x.is_file()]
             for filePath in gltfFilePaths:
                 bpy.ops.import_scene.gltf(filepath=str(filePath))
+                i += 1
         # Import OBJ files
         if tool.import_obj == True:
             objFilePaths = [x for x in p.glob('**/*.obj') if x.is_file()]
             for filePath in objFilePaths:
                 bpy.ops.import_scene.obj(filepath=str(filePath))
+                i += 1
         # Import X3D files
         if tool.import_x3d == True:
             x3dFilePaths = [x for x in p.glob('**/*.x3d') if x.is_file()]
             for filePath in x3dFilePaths:
                 bpy.ops.import_scene.x3d(filepath=str(filePath))
+                i += 1
         '''
         Hide objects after importing them if user wants
         Hiding them individually straight after import might be a better idea
@@ -438,6 +443,7 @@ class OT_ImportModels(Operator):
         if tool.hide_after_import == True:
             for object in imported_objects:
                 object.hide_set(True)
+        DisplayMessageBox("Complete, {0} models imported".format(i))
         return{'FINISHED'}
 
 class OT_ImportPbrTextureSets(Operator):
@@ -447,7 +453,7 @@ class OT_ImportPbrTextureSets(Operator):
     def execute(self, context):
         scene = context.scene
         tool = scene.assetlibrarytools
-        
+        i = 0
         subdirectories = [x for x in pathlib.Path(tool.mat_import_path).iterdir() if x.is_dir()]
         for sd in subdirectories:
             filePaths = [x for x in pathlib.Path(sd).iterdir() if x.is_file()]
@@ -455,7 +461,9 @@ class OT_ImportPbrTextureSets(Operator):
             if tool.use_fake_user == True:
                 mat.use_fake_user = True
             if tool.use_real_displacement == True:
-                mat.cycles.displacement_method = 'BOTH'       
+                mat.cycles.displacement_method = 'BOTH'
+            i += 1
+        DisplayMessageBox("Complete, {0} materials imported".format(i))
         return{'FINISHED'}
 
 class OT_MarkAllMaterialsAsAssets(Operator):
@@ -463,8 +471,11 @@ class OT_MarkAllMaterialsAsAssets(Operator):
     bl_idname = "alt.markallmaterialssasassets"
     
     def execute(self, context):
+        i = 0
         for mat in bpy.data.materials:
             mat.asset_mark()
+            i += 1
+        DisplayMessageBox("Complete, {0} assets marked".format(i))
         return {'FINISHED'}
 
 class OT_ClearMaterialAssets(Operator):
@@ -472,8 +483,11 @@ class OT_ClearMaterialAssets(Operator):
     bl_idname = "alt.clearmaterialassets"
     
     def execute(self, context):
+        i = 0
         for mat in bpy.data.materials:
             mat.asset_clear()
+            i += 1
+        DisplayMessageBox("Complete, {0} assets unmarked".format(i))
         return {'FINISHED'}
 
 class OT_MarkAllMeshesAsAssets(Operator):
@@ -481,8 +495,11 @@ class OT_MarkAllMeshesAsAssets(Operator):
     bl_idname = "alt.markallmeshesasassets"
     
     def execute(self, context):
+        i = 0
         for mesh in bpy.data.meshes:
             mesh.asset_mark()
+            i += 1
+        DisplayMessageBox("Complete, {0} assets marked".format(i))
         return {'FINISHED'}
 
 class OT_ClearMeshAssets(Operator):
@@ -490,8 +507,11 @@ class OT_ClearMeshAssets(Operator):
     bl_idname = "alt.clearmeshassets"
     
     def execute(self, context):
+        i = 0
         for mesh in bpy.data.meshes:
             mesh.asset_clear()
+            i += 1
+        DisplayMessageBox("Complete, {0} assets unmarked".format(i))
         return {'FINISHED'}
 
 class OT_MarkAllObjectsAsAssets(Operator):
@@ -499,8 +519,11 @@ class OT_MarkAllObjectsAsAssets(Operator):
     bl_idname = "alt.markallobjectsasassets"
     
     def execute(self, context):
+        i = 0
         for object in bpy.data.objects:
             object.asset_mark()
+            i += 1
+        DisplayMessageBox("Complete, {0} assets marked".format(i))
         return {'FINISHED'}
 
 class OT_ClearObjectAssets(Operator):
@@ -508,8 +531,11 @@ class OT_ClearObjectAssets(Operator):
     bl_idname = "alt.clearobjectassets"
     
     def execute(self, context):
+        i = 0
         for object in bpy.data.objects:
             object.asset_clear()
+            i += 1
+        DisplayMessageBox("Complete, {0} assets unmarked".format(i))
         return {'FINISHED'}
 
 class OT_DeleteAllMaterials(Operator):
@@ -517,8 +543,11 @@ class OT_DeleteAllMaterials(Operator):
     bl_idname = "alt.deleteallmaterials"
     
     def execute(self, context):
+        i = 0
         for mat in bpy.data.materials:
             bpy.data.materials.remove(mat)
+            i += 1
+        DisplayMessageBox("Complete, {0} materials deleted".format(i))
         return {'FINISHED'}
 
 class OT_DeleteAllObjects(Operator):
@@ -526,8 +555,11 @@ class OT_DeleteAllObjects(Operator):
     bl_idname = "alt.deleteallobjects"
     
     def execute(self, context):
+        i = 0
         for object in bpy.data.objects:
             bpy.data.objects.remove(object)
+            i += 1
+        DisplayMessageBox("Complete, {0} objects deleted".format(i))
         return {'FINISHED'}
 
 class OT_AssetDownloaderOperator(Operator):
@@ -537,6 +569,8 @@ class OT_AssetDownloaderOperator(Operator):
     def execute(self, context):
         tool = context.scene.assetlibrarytools
         ur = bpy.utils.user_resource('SCRIPTS')
+        if tool.downloader_save_path == '':
+            DisplayMessageBox("Invalid save path", "Warning", "ERROR")
         if tool.keywordFilter == "":
             tool.keywordFilter = 'None'
         os.system('start cmd /k \"cd /D {0} & python ALT_CC0AssetDownloader.py {1} {2} {3} {4} {5} {6}'.format(ur+'\\addons\\AssetLibraryTools', tool.downloader_save_path, tool.keywordFilter, tool.attributeFilter, tool.extensionFilter, str(tool.unZip), str(tool.deleteZips)))
@@ -659,7 +693,7 @@ class OBJECT_PT_panel(Panel):
             utilBox.operator("alt.deleteallobjects")
             
         
-        # Experimental asset downloader UI
+        # Asset downloader UI
         assetDownloaderBox = layout.box()
         assetDownloaderRow = assetDownloaderBox.row()
         assetDownloaderRow.prop(obj, "assetDownloaderRow_expanded",
