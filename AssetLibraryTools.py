@@ -125,8 +125,11 @@ class createPBR():
 
         # Create texture nodes
         node_imTexDiffuse = nodes.new(type="ShaderNodeTexImage")
-        node_imTexDiffuse.location = -800,0
+        node_imTexDiffuse.location = -800,300
         node_imTexDiffuse.name = "node_imTexDiffuse"
+        node_imTexMetallic = nodes.new(type="ShaderNodeTexImage")
+        node_imTexMetallic.location = -800,0
+        node_imTexDiffuse.name = "node_imTexMetallic"
         node_imTexRoughness = nodes.new(type="ShaderNodeTexImage")
         node_imTexRoughness.location = -800,-300
         node_imTexRoughness.name = "node_imTexRoughness"
@@ -147,6 +150,7 @@ class createPBR():
         
         # Load textures
         diffuseTexture = None
+        metallicTexture = None
         roughnessTexture = None
         normalTexture = None
         displacementTexture = None
@@ -154,6 +158,9 @@ class createPBR():
             t = FindPBRTextureType(i.name)
             if t == "diff":
                 diffuseTexture = bpy.data.images.load(str(i))
+            elif t == "met":
+                metallicTexture = bpy.data.images.load(str(i))
+                metallicTexture.colorspace_settings.name = 'Non-Color'
             elif t == "rough":
                 roughnessTexture = bpy.data.images.load(str(i))
                 roughnessTexture.colorspace_settings.name = 'Non-Color'
@@ -162,6 +169,7 @@ class createPBR():
                 normalTexture.colorspace_settings.name = 'Non-Color'
             elif t == "disp":
                 displacementTexture = bpy.data.images.load(str(i))
+                displacementTexture.colorspace_settings.name = 'Non-Color'
                 
         '''check if texture is loaded
             if not loaded, delete relevant node(s)
@@ -173,6 +181,13 @@ class createPBR():
             links.new(node_mapping.outputs[0], node_imTexDiffuse.inputs[0])
         else:
             nodes.remove(node_imTexDiffuse)
+            
+        if metallicTexture != None and tool.import_met != False:
+            node_imTexMetallic.image = metallicTexture
+            links.new(node_imTexMetallic.outputs[0], node_principled.inputs[4])
+            links.new(node_mapping.outputs[0], node_imTexMetallic.inputs[0])
+        else:
+            nodes.remove(node_imTexMetallic)
             
         if roughnessTexture != None and tool.import_rough != False:
             node_imTexRoughness.image = roughnessTexture
@@ -218,7 +233,7 @@ class properties(PropertyGroup):
         )
     model_import_path : StringProperty(
         name = "Import directory",
-        description = "Choose a directory to batch import models from",
+        description = "Choose a directory to batch import models from.\nSubdirectories are checked recursively.",
         default = "",
         maxlen = 1024,
         subtype = 'DIR_PATH'
@@ -237,6 +252,11 @@ class properties(PropertyGroup):
         )
     import_diff : BoolProperty(
         name = "Import diffuse",
+        description = "",
+        default = True
+        )
+    import_met : BoolProperty(
+        name = "Import metallic",
         description = "",
         default = True
         )
@@ -497,6 +517,7 @@ class OBJECT_PT_panel(Panel):
                 matImportBox.prop(tool, "use_real_displacement")
                 matImportBox.label(text="Import following textures into materials (if found):")
                 matImportBox.prop(tool, "import_diff")
+                matImportBox.prop(tool, "import_met")
                 matImportBox.prop(tool, "import_rough")
                 matImportBox.prop(tool, "import_norm")
                 matImportBox.prop(tool, "import_disp")
