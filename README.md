@@ -11,8 +11,8 @@ Blender addon to help quickly create asset libraries for the blender asset brows
 * Batch mark/unmark materials, meshes and objects as assets
 * Delete all materials
 * Delete all objects
-* Download CC0 assets
-* Filter CC0 assets by: Keyword, Resolution + filetype (For textures), File extension
-* Unzip CC0 asset files automatically
+* Batch download CC0 assets from ambientcg.com
+* Filter assets by: Keyword, Resolution + filetype (For textures), File extension
+* Unzip downloaded zip files automatically
 * Delete zip files after unzip automatically
 * And more to come
