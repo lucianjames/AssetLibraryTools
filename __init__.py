@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "Set of tools to speed up the creation of asset libraries for the asset browser introduced in blender 3.0",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 0, 6),
+    "version": (0, 0, 7),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "", # used for warning icon and text in addons panel
@@ -35,14 +35,14 @@ import os
 # ------------------------------------------------------------------------ 
 
 diffNames = ["diffuse", "diff", "albedo", "base", "col", "color"]
-sssNames = ["sss", "subsurface"] #todo
-metNames = ["metallic", "metalness", "metal", "mtl"]
+sssNames = ["sss", "subsurface"]
+metNames = ["metallic", "metalness", "metal", "mtl", "met"]
 specNames = ["specularity", "specular", "spec", "spc"]
 roughNames = ["roughness", "rough", "rgh", "gloss", "glossy", "glossiness"]
 normNames = ["normal", "nor", "nrm", "nrml norm"]
 dispNames = ["displacement", "displace", "disp", "dsp", "height", "heightmap", "bump", "bmp"]
 alphaNames = ["alpha", "opacity"]
-emissiveNames = ["emissive", "emission"] #todo
+emissiveNames = ["emissive", "emission"]
 
 # Function partly stolen from node wrangler :D
 def FindPBRTextureType(fname):
@@ -80,6 +80,7 @@ def FindPBRTextureType(fname):
             PBRTT = "alpha"
         if i in emissiveNames:
             PBRTT = "emission"
+    print(PBRTT)
     return PBRTT
 
 def DisplayMessageBox(message = "", title = "Info", icon = 'INFO'):
@@ -131,20 +132,28 @@ class createPBR():
 
         # Create texture nodes
         node_imTexDiffuse = nodes.new(type="ShaderNodeTexImage")
-        node_imTexDiffuse.location = -800,600
+        node_imTexDiffuse.location = -800,1200
         node_imTexDiffuse.name = "node_imTexDiffuse"
+        node_imTexSSS = nodes.new(type="ShaderNodeTexImage")
+        node_imTexSSS.location = -800,900
+        node_imTexSSS.name = "node_imTexSSS"
         node_imTexMetallic = nodes.new(type="ShaderNodeTexImage")
-        node_imTexMetallic.location = -800,300
+        node_imTexMetallic.location = -800,600
         node_imTexMetallic.name = "node_imTexMetallic"
         node_imTexSpecular = nodes.new(type="ShaderNodeTexImage")
-        node_imTexSpecular.location = -800,0
+        node_imTexSpecular.location = -800,300
         node_imTexSpecular.name = "node_imTexSpecular"
         node_imTexRoughness = nodes.new(type="ShaderNodeTexImage")
-        node_imTexRoughness.location = -800,-300
+        node_imTexRoughness.location = -800,0
         node_imTexRoughness.name = "node_imTexRoughness"
+        node_imTexEmission = nodes.new(type="ShaderNodeTexImage")
+        node_imTexEmission.location = -800,-300
+        node_imTexEmission.name = "node_imTexEmission"
+        
         node_imTexAlpha = nodes.new(type="ShaderNodeTexImage")
         node_imTexAlpha.location = -800, -600
         node_imTexAlpha.name = "node_imTexAlpha"
+        
         node_imTexNormal = nodes.new(type="ShaderNodeTexImage")
         node_imTexNormal.location = -800,-900
         node_imTexNormal.name = "node_imTexNormal"
@@ -162,9 +171,11 @@ class createPBR():
         
         # Load textures
         diffuseTexture = None
-        specularTexture = None
+        sssTexture = None
         metallicTexture = None
+        specularTexture = None
         roughnessTexture = None
+        emissionTexture = None
         alphaTexture = None
         normalTexture = None
         displacementTexture = None
@@ -172,15 +183,20 @@ class createPBR():
             t = FindPBRTextureType(i.name)
             if t == "diff":
                 diffuseTexture = bpy.data.images.load(str(i))
-            elif t == "spec":
-                specularTexture = bpy.data.images.load(str(i))
-                metallicTexture.colorspace_settings.name = 'Non-Color'
+            elif t == "sss":
+                sssTexture = bpy.data.images.load(str(i))
+                sssTexture.colorspace_settings.name = 'Non-Color'
             elif t == "met":
                 metallicTexture = bpy.data.images.load(str(i))
                 metallicTexture.colorspace_settings.name = 'Non-Color'
+            elif t == "spec":
+                specularTexture = bpy.data.images.load(str(i))
+                specularTexture.colorspace_settings.name = 'Non-Color'
             elif t == "rough":
                 roughnessTexture = bpy.data.images.load(str(i))
                 roughnessTexture.colorspace_settings.name = 'Non-Color'
+            elif t == "emission":
+                emissionTexture = bpy.data.images.load(str(i))  
             elif t == "alpha":
                 alphaTexture = bpy.data.images.load(str(i))
                 alphaTexture.colorspace_settings.name = 'Non-Color'
@@ -201,6 +217,13 @@ class createPBR():
             links.new(node_mapping.outputs[0], node_imTexDiffuse.inputs[0])
         else:
             nodes.remove(node_imTexDiffuse)
+        
+        if sssTexture != None and tool.import_sss != False:
+            node_imTexSSS.image = sssTexture
+            links.new(node_imTexSSS.outputs[0], node_principled.inputs[1])
+            links.new(node_mapping.outputs[0], node_imTexSSS.inputs[0])
+        else:
+            nodes.remove(node_imTexSSS)
            
         if specularTexture != None and tool.import_spec != False:
             node_imTexSpecular.image = specularTexture
@@ -222,7 +245,12 @@ class createPBR():
             links.new(node_mapping.outputs[0], node_imTexRoughness.inputs[0])
         else:
             nodes.remove(node_imTexRoughness)
-            
+        
+        if emissionTexture != None and tool.import_emission != False:
+            node_imTexEmission.image = emissionTexture
+            links.new(node_imTexEmission.outputs[0], node_principled.inputs[17])
+            links.new(node_mapping.outputs[0], node_imTexEmission.inputs[0])
+    
         if alphaTexture != None and tool.import_alpha != False:
             node_imTexAlpha.image = alphaTexture
             links.new(node_imTexAlpha.outputs[0], node_principled.inputs[19])
@@ -289,6 +317,11 @@ class properties(PropertyGroup):
         description = "",
         default = True
         )
+    import_sss : BoolProperty(
+        name = "Import SSS",
+        description = "",
+        default = True
+        )
     import_met : BoolProperty(
         name = "Import metallic",
         description = "",
@@ -303,6 +336,11 @@ class properties(PropertyGroup):
         name = "Import roughness",
         description = "",
         default = True
+        )
+    import_emission : BoolProperty(
+        name = "Import emission",
+        description = "",
+        default = False
         )
     import_alpha : BoolProperty(
         name = "Import alpha",
@@ -661,9 +699,11 @@ class OBJECT_PT_panel(Panel):
                 matImportBox.prop(tool, "use_real_displacement")
                 matImportBox.label(text="Import following textures into materials (if found):")
                 matImportBox.prop(tool, "import_diff")
+                matImportBox.prop(tool, "import_sss")
                 matImportBox.prop(tool, "import_met")
                 matImportBox.prop(tool, "import_spec")
                 matImportBox.prop(tool, "import_rough")
+                matImportBox.prop(tool, "import_emission")
                 matImportBox.prop(tool, "import_alpha")
                 matImportBox.prop(tool, "import_norm")
                 matImportBox.prop(tool, "import_disp")
