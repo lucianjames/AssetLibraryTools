@@ -95,79 +95,21 @@ def DisplayMessageBox(message = "", title = "Info", icon = 'INFO'):
 
 class createPBR():
     
+    def createNode(mat, type, name="newNode", location=(0,0)):
+        nodes = mat.node_tree.nodes
+        n = nodes.new(type=type)
+        n.name = name
+        n.location = location
+        return n
+    
     def simplePrincipledSetup(name, files):
-        
         tool = bpy.context.scene.assetlibrarytools
-        
-        # Create a new material
+        # Create a new empty material
         mat = bpy.data.materials.new(name)
         mat.use_nodes = True
         nodes = mat.node_tree.nodes
-        links = mat.node_tree.links
-        
-        # Clear all nodes to start clean
+        links = mat.node_tree.links 
         nodes.clear()
-            
-        # Create output node
-        node_output = nodes.new(type='ShaderNodeOutputMaterial')   
-        node_output.name = "node_output"
-        node_output.location = 250,0
-        
-        # Create principled BSDF node
-        node_principled = nodes.new(type='ShaderNodeBsdfPrincipled')
-        node_principled.name = "node_principled"
-        node_principled.location = -300,0
-            
-        # Create mapping nodes
-        node_mapping = nodes.new(type="ShaderNodeMapping")
-        node_mapping.name = "node_mapping"
-        node_mapping.location = -1300,0
-        node_texCoord = nodes.new(type="ShaderNodeTexCoord")
-        node_texCoord.name = "node_texCoord"
-        node_texCoord.location = -1500,0
-            
-        # Link base nodes
-        links.new(node_principled.outputs[0], node_output.inputs[0])
-        links.new(node_texCoord.outputs[2], node_mapping.inputs[0])
-
-        # Create texture nodes
-        node_imTexDiffuse = nodes.new(type="ShaderNodeTexImage")
-        node_imTexDiffuse.location = -800,1200
-        node_imTexDiffuse.name = "node_imTexDiffuse"
-        node_imTexSSS = nodes.new(type="ShaderNodeTexImage")
-        node_imTexSSS.location = -800,900
-        node_imTexSSS.name = "node_imTexSSS"
-        node_imTexMetallic = nodes.new(type="ShaderNodeTexImage")
-        node_imTexMetallic.location = -800,600
-        node_imTexMetallic.name = "node_imTexMetallic"
-        node_imTexSpecular = nodes.new(type="ShaderNodeTexImage")
-        node_imTexSpecular.location = -800,300
-        node_imTexSpecular.name = "node_imTexSpecular"
-        node_imTexRoughness = nodes.new(type="ShaderNodeTexImage")
-        node_imTexRoughness.location = -800,0
-        node_imTexRoughness.name = "node_imTexRoughness"
-        node_imTexEmission = nodes.new(type="ShaderNodeTexImage")
-        node_imTexEmission.location = -800,-300
-        node_imTexEmission.name = "node_imTexEmission"
-        
-        node_imTexAlpha = nodes.new(type="ShaderNodeTexImage")
-        node_imTexAlpha.location = -800, -600
-        node_imTexAlpha.name = "node_imTexAlpha"
-        
-        node_imTexNormal = nodes.new(type="ShaderNodeTexImage")
-        node_imTexNormal.location = -800,-900
-        node_imTexNormal.name = "node_imTexNormal"
-        node_imTexDisplacement = nodes.new(type="ShaderNodeTexImage")
-        node_imTexDisplacement.location = -800,-1200
-        node_imTexDisplacement.name = "node_imTexDisplacement"
-        
-        # Create norm+disp nodes
-        node_normalMap = nodes.new(type="ShaderNodeNormalMap")
-        node_normalMap.location = -500,-600
-        node_normalMap.name = "node_normalMap"
-        node_displacement = nodes.new(type="ShaderNodeDisplacement")
-        node_displacement.location = -200,-600
-        node_displacement.name = "node_displacement"
         
         # Load textures
         diffuseTexture = None
@@ -206,75 +148,84 @@ class createPBR():
             elif t == "disp":
                 displacementTexture = bpy.data.images.load(str(i))
                 displacementTexture.colorspace_settings.name = 'Non-Color'
-                
-        '''check if texture is loaded
-            if not loaded, delete relevant node(s)
-            if loaded, place texture in relevant texture node and link relevant nodes'''
-            
+        
+        # Create base nodes
+        node_output = createPBR.createNode(mat, "ShaderNodeOutputMaterial", "node_output", (250,0))
+        node_principled = createPBR.createNode(mat, "ShaderNodeBsdfPrincipled", "node_principled", (-300,0))
+        node_mapping = createPBR.createNode(mat, "ShaderNodeMapping", "node_mapping", (-1300,0))
+        node_texCoord = createPBR.createNode(mat, "ShaderNodeTexCoord", "node_texCoord", (-1500,0))
+        # Link base nodes
+        links.new(node_principled.outputs[0], node_output.inputs[0])
+        links.new(node_texCoord.outputs[2], node_mapping.inputs[0])
+        
+        # Create, fill, and link texture nodes
+        imported_tex_nodes = 0
         if diffuseTexture != None and tool.import_diff != False:
+            node_imTexDiffuse = createPBR.createNode(mat, "ShaderNodeTexImage", "node_imTexDiffuse", (-800,300-(300*imported_tex_nodes)))
             node_imTexDiffuse.image = diffuseTexture
             links.new(node_imTexDiffuse.outputs[0], node_principled.inputs[0])
             links.new(node_mapping.outputs[0], node_imTexDiffuse.inputs[0])
-        else:
-            nodes.remove(node_imTexDiffuse)
-        
+            imported_tex_nodes += 1
+            
         if sssTexture != None and tool.import_sss != False:
+            node_imTexSSS = createPBR.createNode(mat, "ShaderNodeTexImage", "node_imTexSSS", (-800,300-(300*imported_tex_nodes)))
             node_imTexSSS.image = sssTexture
             links.new(node_imTexSSS.outputs[0], node_principled.inputs[1])
             links.new(node_mapping.outputs[0], node_imTexSSS.inputs[0])
-        else:
-            nodes.remove(node_imTexSSS)
-           
-        if specularTexture != None and tool.import_spec != False:
-            node_imTexSpecular.image = specularTexture
-            links.new(node_imTexSpecular.outputs[0], node_principled.inputs[5])
-            links.new(node_mapping.outputs[0], node_imTexSpecular.inputs[0])
-        else:
-            nodes.remove(node_imTexSpecular)
+            imported_tex_nodes += 1
             
         if metallicTexture != None and tool.import_met != False:
+            node_imTexMetallic = createPBR.createNode(mat, "ShaderNodeTexImage", "node_imTexMetallic", (-800,300-(300*imported_tex_nodes)))
             node_imTexMetallic.image = metallicTexture
             links.new(node_imTexMetallic.outputs[0], node_principled.inputs[4])
             links.new(node_mapping.outputs[0], node_imTexMetallic.inputs[0])
-        else:
-            nodes.remove(node_imTexMetallic)
+            imported_tex_nodes += 1
+            
+        if specularTexture != None and tool.import_spec != False:
+            node_imTexSpecular = createPBR.createNode(mat, "ShaderNodeTexImage", "node_imTexSpecular", (-800,300-(300*imported_tex_nodes)))
+            node_imTexSpecular.image = specularTexture
+            links.new(node_imTexSpecular.outputs[0], node_principled.inputs[5])
+            links.new(node_mapping.outputs[0], node_imTexSpecular.inputs[0])
+            imported_tex_nodes += 1
             
         if roughnessTexture != None and tool.import_rough != False:
+            node_imTexRoughness = createPBR.createNode(mat, "ShaderNodeTexImage", "node_imTexRoughness", (-800,300-(300*imported_tex_nodes)))
             node_imTexRoughness.image = roughnessTexture
             links.new(node_imTexRoughness.outputs[0], node_principled.inputs[7])
             links.new(node_mapping.outputs[0], node_imTexRoughness.inputs[0])
-        else:
-            nodes.remove(node_imTexRoughness)
-        
+            imported_tex_nodes += 1
+            
         if emissionTexture != None and tool.import_emission != False:
+            node_imTexEmission = createPBR.createNode(mat, "ShaderNodeTexImage", "node_imTexEmission", (-800,300-(300*imported_tex_nodes)))
             node_imTexEmission.image = emissionTexture
             links.new(node_imTexEmission.outputs[0], node_principled.inputs[17])
             links.new(node_mapping.outputs[0], node_imTexEmission.inputs[0])
-    
+            imported_tex_nodes += 1
+            
         if alphaTexture != None and tool.import_alpha != False:
+            node_imTexAlpha = createPBR.createNode(mat, "ShaderNodeTexImage", "node_imTexAlpha", (-800,300-(300*imported_tex_nodes)))
             node_imTexAlpha.image = alphaTexture
             links.new(node_imTexAlpha.outputs[0], node_principled.inputs[19])
             links.new(node_mapping.outputs[0], node_imTexAlpha.inputs[0])
-        else:
-            nodes.remove(node_imTexAlpha)
+            imported_tex_nodes += 1
             
         if normalTexture != None and tool.import_norm != False:
+            node_imTexNormal = createPBR.createNode(mat, "ShaderNodeTexImage", "node_imTexNormal", (-800,300-(300*imported_tex_nodes)))
             node_imTexNormal.image = normalTexture
+            node_normalMap = createPBR.createNode(mat, "ShaderNodeNormalMap", "node_normalMap", (-500,300-(300*imported_tex_nodes)))
             links.new(node_imTexNormal.outputs[0], node_normalMap.inputs[1])
             links.new(node_normalMap.outputs[0], node_principled.inputs[20])
             links.new(node_mapping.outputs[0], node_imTexNormal.inputs[0])
-        else:
-            nodes.remove(node_imTexNormal)
-            nodes.remove(node_normalMap)
+            imported_tex_nodes += 1
             
         if displacementTexture != None and tool.import_disp != False:
+            node_imTexDisplacement = createPBR.createNode(mat, "ShaderNodeTexImage", "node_imTexDisplacement", (-800,300-(300*imported_tex_nodes)))
             node_imTexDisplacement.image = displacementTexture
+            node_displacement = createPBR.createNode(mat, "ShaderNodeDisplacement", "node_displacement", (-200,-600))
             links.new(node_imTexDisplacement.outputs[0], node_displacement.inputs[0])
             links.new(node_displacement.outputs[0], node_output.inputs[2])
             links.new(node_mapping.outputs[0], node_imTexDisplacement.inputs[0])
-        else:
-            nodes.remove(node_imTexDisplacement)
-            nodes.remove(node_displacement)
+            imported_tex_nodes += 1
         
         return mat
 
