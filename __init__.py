@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "Set of tools to speed up the creation of asset libraries for the asset browser introduced in blender 3.0",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 0, 9),
+    "version": (0, 1, 0),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
@@ -384,6 +384,11 @@ class properties(PropertyGroup):
         description = "",
         default = True
         )
+    skipDuplicates : BoolProperty(
+        name = "Dont download files which already exist",
+        description = "",
+        default = True
+        )
     
     # UI properties
     matImport_expanded : BoolProperty(
@@ -606,7 +611,7 @@ class OT_AssetDownloaderOperator(Operator):
             DisplayMessageBox("Invalid save path", "Warning", "ERROR")
         if tool.keywordFilter == "":
             tool.keywordFilter = 'None'
-        os.system('start cmd /k \"cd /D {0} & python ALT_CC0AssetDownloader.py {1} {2} {3} {4} {5} {6}'.format(ur+'\\addons\\AssetLibraryTools', tool.downloader_save_path, tool.keywordFilter, tool.attributeFilter, tool.extensionFilter, str(tool.unZip), str(tool.deleteZips)))
+        os.system('start cmd /k \"cd /D {0} & python ALT_CC0AssetDownloader.py {1} {2} {3} {4} {5} {6} {7}'.format(ur+'\\addons\\AssetLibraryTools', tool.downloader_save_path, tool.keywordFilter, tool.attributeFilter, tool.extensionFilter, str(tool.unZip), str(tool.deleteZips), str(tool.skipDuplicates)))
         return {'FINISHED'}
 
 # ------------------------------------------------------------------------
@@ -747,6 +752,7 @@ class OBJECT_PT_panel(Panel):
             assetDownloaderBox.prop(tool, "extensionFilter")
             assetDownloaderBox.prop(tool, "unZip")
             assetDownloaderBox.prop(tool, "deleteZips")
+            assetDownloaderBox.prop(tool, "skipDuplicates")
             assetDownloaderBox.operator("alt.assetdownloader")
             
 
