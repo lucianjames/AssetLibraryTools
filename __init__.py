@@ -2,10 +2,10 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "Set of tools to speed up the creation of asset libraries for the asset browser introduced in blender 3.0",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 0, 8),
+    "version": (0, 0, 9),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
-    "warning": "", # used for warning icon and text in addons panel
+    "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
     "wiki_url": "",
     "tracker_url": "",
     "category": "3D View"
@@ -311,8 +311,8 @@ class properties(PropertyGroup):
     
     # Model import properties
     hide_after_import : BoolProperty(
-        name = "Hide models after they are imported",
-        description = "Reduces viewport polycount, prevents low framerate/crashes",
+        name = "Hide models after import",
+        description = "Reduces viewport polycount, prevents low framerate/crashes\nHides each model individually straight after import",
         default = False
         )
     import_fbx : BoolProperty(
@@ -385,7 +385,6 @@ class properties(PropertyGroup):
         default = True
         )
     
-    
     # UI properties
     matImport_expanded : BoolProperty(
         name = "Click to expand",
@@ -432,44 +431,51 @@ class OT_ImportModels(Operator):
     bl_label = "Import models"
     bl_idname = "alt.importmodels"
     
+    def hideNewObjects(old_objects):
+        scene = bpy.context.scene
+        tool = scene.assetlibrarytools
+        imported_objects = set(bpy.context.scene.objects) - old_objects
+        if tool.hide_after_import == True:
+            for object in imported_objects:
+                object.hide_set(True)
+    
     def execute(self, context):
         scene = context.scene
         tool = scene.assetlibrarytools
-        old_objects = set(context.scene.objects)
         p = pathlib.Path(str(tool.model_import_path))
         i = 0
         # Import FBX files
         if tool.import_fbx == True:
             fbxFilePaths = [x for x in p.glob('**/*.fbx') if x.is_file()]
             for filePath in fbxFilePaths:
+                old_objects = set(context.scene.objects)
                 bpy.ops.import_scene.fbx(filepath=str(filePath))
+                OT_ImportModels.hideNewObjects(old_objects)
                 i += 1
         # Import GLTF files
         if tool.import_gltf == True:
             gltfFilePaths = [x for x in p.glob('**/*.gltf') if x.is_file()]
             for filePath in gltfFilePaths:
+                old_objects = set(context.scene.objects)
                 bpy.ops.import_scene.gltf(filepath=str(filePath))
+                OT_ImportModels.hideNewObjects(old_objects)
                 i += 1
         # Import OBJ files
         if tool.import_obj == True:
             objFilePaths = [x for x in p.glob('**/*.obj') if x.is_file()]
             for filePath in objFilePaths:
+                old_objects = set(context.scene.objects)
                 bpy.ops.import_scene.obj(filepath=str(filePath))
+                OT_ImportModels.hideNewObjects(old_objects)
                 i += 1
         # Import X3D files
         if tool.import_x3d == True:
             x3dFilePaths = [x for x in p.glob('**/*.x3d') if x.is_file()]
             for filePath in x3dFilePaths:
+                old_objects = set(context.scene.objects)
                 bpy.ops.import_scene.x3d(filepath=str(filePath))
+                OT_ImportModels.hideNewObjects(old_objects)
                 i += 1
-        '''
-        Hide objects after importing them if user wants
-        Hiding them individually straight after import might be a better idea
-        '''
-        imported_objects = set(context.scene.objects) - old_objects
-        if tool.hide_after_import == True:
-            for object in imported_objects:
-                object.hide_set(True)
         DisplayMessageBox("Complete, {0} models imported".format(i))
         return{'FINISHED'}
 
