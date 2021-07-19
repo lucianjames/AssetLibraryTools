@@ -7,7 +7,7 @@ Blender addon to help quickly create asset libraries for the blender asset brows
 * Add real displacement to materials upon import
 * Add fake user to materials upon import
 * Batch import models of various filetypes (fbx, gltf, obj, x3d)
-* Hide all imported models in viewport after importing them
+* Hide all imported models indivudally straight after import
 * Batch mark/unmark materials, meshes and objects as assets
 * Delete all materials
 * Delete all objects
