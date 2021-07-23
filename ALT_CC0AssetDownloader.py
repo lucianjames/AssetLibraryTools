@@ -145,7 +145,7 @@ print("=====\nFound {0} assets that match the filters, with a combined size of {
 
 print("=====\nDisplay asset names? (y/n)")
 while True:
-    userInput = input().lower()
+    userInput = input()
     if userInput.lower() in yesInputs:
         for i in filteredAssets:
             print(i[0]+"_"+i[1])
@@ -156,7 +156,7 @@ while True:
 
 print("=====\nWould you like to download these assets? (y/n)")
 while True:
-    userInput = input().lower()
+    userInput = input()
     if userInput.lower() in yesInputs:
         download(filteredAssets, saveLocation, unZip, deleteZips, skipDuplicates)
         break
