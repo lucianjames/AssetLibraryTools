@@ -351,7 +351,7 @@ class properties(PropertyGroup):
         maxlen = 1024,
         )
     attributeFilter : EnumProperty(
-        name="Attribute filter:",
+        name="Attribute filter",
         description="Choose attribute to filter assets by",
         items=[ ('None', "None", ""),
                 ('1K-JPG', "1K-JPG", ""),
@@ -365,13 +365,20 @@ class properties(PropertyGroup):
                ]
         )
     extensionFilter : EnumProperty(
-        name="Extension filter:",
+        name="Extension filter",
         description="Choose file extension to filter assets by",
         items=[ ('None', "None", ""),
                 ('zip', "ZIP", ""),
                 ('obj', "OBJ", ""),
                 ('exr', "EXR", ""),
                 ('sbsar', "SBSAR", ""),
+               ]
+        )
+    terminal : EnumProperty(
+        name="Terminal",
+        description="Choose terminal to run script with",
+        items=[ ('cmd', "cmd", ""),
+                ('gnome-terminal', "gnome-terminal", ""),
                ]
         )
     unZip : BoolProperty(
@@ -611,7 +618,12 @@ class OT_AssetDownloaderOperator(Operator):
             DisplayMessageBox("Invalid save path", "Warning", "ERROR")
         if tool.keywordFilter == "":
             tool.keywordFilter = 'None'
-        os.system('start cmd /k \"cd /D {0} & python ALT_CC0AssetDownloader.py {1} {2} {3} {4} {5} {6} {7}'.format(ur+'\\addons\\AssetLibraryTools', tool.downloader_save_path, tool.keywordFilter, tool.attributeFilter, tool.extensionFilter, str(tool.unZip), str(tool.deleteZips), str(tool.skipDuplicates)))
+        
+        if tool.terminal == 'gnome-terminal':
+            os.system('gnome-terminal -e "python3 {0}/ALT_CC0AssetDownloader.py {1} {2} {3} {4} {5} {6} {7}"'.format(ur+'/addons/AssetLibraryTools', tool.downloader_save_path, tool.keywordFilter, tool.attributeFilter, tool.extensionFilter, str(tool.unZip), str(tool.deleteZips), str(tool.skipDuplicates)))
+        if tool.terminal == 'cmd':
+            os.system('start cmd /k \"cd /D {0} & python ALT_CC0AssetDownloader.py {1} {2} {3} {4} {5} {6} {7}'.format(ur+'\\addons\\AssetLibraryTools', tool.downloader_save_path, tool.keywordFilter, tool.attributeFilter, tool.extensionFilter, str(tool.unZip), str(tool.deleteZips), str(tool.skipDuplicates)))  
+        
         return {'FINISHED'}
 
 # ------------------------------------------------------------------------
@@ -753,6 +765,7 @@ class OBJECT_PT_panel(Panel):
             assetDownloaderBox.prop(tool, "unZip")
             assetDownloaderBox.prop(tool, "deleteZips")
             assetDownloaderBox.prop(tool, "skipDuplicates")
+            assetDownloaderBox.prop(tool, "terminal")
             assetDownloaderBox.operator("alt.assetdownloader")
             
 
