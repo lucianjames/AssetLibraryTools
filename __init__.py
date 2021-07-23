@@ -1,8 +1,8 @@
 bl_info = {
     "name": "AssetLibraryTools",
-    "description": "Set of tools to speed up the creation of asset libraries for the asset browser introduced in blender 3.0",
+    "description": "AssetLibraryTools is a free addon which aims to speed up the process of creating asset libraries with the asset browser, This addon is currently very much experimental as is the asset browser in blender.",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
@@ -44,7 +44,6 @@ dispNames = ["displacement", "displace", "disp", "dsp", "height", "heightmap", "
 alphaNames = ["alpha", "opacity"]
 emissiveNames = ["emissive", "emission"]
 
-# Function partly stolen from node wrangler :D
 def FindPBRTextureType(fname):
     # Split filename into components
     # 'WallTexture_diff_2k.002.jpg' -> ['Wall', 'Texture', 'diff', 'k']
@@ -312,7 +311,7 @@ class properties(PropertyGroup):
     # Model import properties
     hide_after_import : BoolProperty(
         name = "Hide models after import",
-        description = "Reduces viewport polycount, prevents low framerate/crashes\nHides each model individually straight after import",
+        description = "Reduces viewport polycount, prevents low framerate/crashes.\nHides each model individually straight after import",
         default = False
         )
     import_fbx : BoolProperty(
