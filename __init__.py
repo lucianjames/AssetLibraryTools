@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "AssetLibraryTools is a free addon which aims to speed up the process of creating asset libraries with the asset browser, This addon is currently very much experimental as is the asset browser in blender.",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 1, 1),
+    "version": (0, 1, 2),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
@@ -290,12 +290,12 @@ class properties(PropertyGroup):
     import_emission : BoolProperty(
         name = "Import emission",
         description = "",
-        default = False
+        default = True
         )
     import_alpha : BoolProperty(
         name = "Import alpha",
         description = "",
-        default = False
+        default = True
         )
     import_norm : BoolProperty(
         name = "Import normal",
@@ -305,7 +305,7 @@ class properties(PropertyGroup):
     import_disp : BoolProperty(
         name = "Import displacement",
         description = "",
-        default = False
+        default = True
         )
     
     # Model import properties
@@ -606,6 +606,40 @@ class OT_DeleteAllObjects(Operator):
         DisplayMessageBox("Complete, {0} objects deleted".format(i))
         return {'FINISHED'}
 
+class OT_DeleteAllTextures(Operator):
+    bl_label = "Delete all textures"
+    bl_idname = "alt.deletealltextures"
+    
+    def execute(self, context):
+        i = 0
+        for tex in bpy.data.textures:
+            bpy.data.textures.remove(tex)
+            i += 1
+        DisplayMessageBox("Complete, {0} textures deleted".format(i))
+        return {'FINISHED'}
+    
+class OT_DeleteAllImages(Operator):
+    bl_label = "Delete all images"
+    bl_idname = "alt.deleteallimages"
+    
+    def execute(self, context):
+        i = 0
+        while len(bpy.data.images) > 0: # Cant use a for loop like the other "delete all" operations for some reason
+            bpy.data.images.remove(bpy.data.images[0])
+            i += 1
+        DisplayMessageBox("Complete, {0} images deleted".format(i))
+        return {'FINISHED'}
+
+class OT_UseDisplacementOnAll(Operator):
+    bl_label = "Use real displacement on all materials"
+    bl_idname = "alt.userealdispall"
+    
+    def execute(self, context):
+        for mat in bpy.data.materials:
+            mat.cycles.displacement_method = 'BOTH'
+        DisplayMessageBox("Done")
+        return {'FINISHED'}
+
 class OT_AssetDownloaderOperator(Operator):
     bl_label = "Run script"
     bl_idname = "alt.assetdownloader"
@@ -744,6 +778,10 @@ class OBJECT_PT_panel(Panel):
             utilRow = utilBox.row()
             utilBox.operator("alt.deleteallmaterials")
             utilBox.operator("alt.deleteallobjects")
+            utilBox.operator("alt.deletealltextures")
+            utilBox.operator("alt.deleteallimages")
+            utilBox.separator()
+            utilBox.operator("alt.userealdispall")
             
         
         # Asset downloader UI
@@ -784,6 +822,9 @@ classes = (
     OT_ClearObjectAssets,
     OT_DeleteAllMaterials,
     OT_DeleteAllObjects,
+    OT_DeleteAllTextures,
+    OT_DeleteAllImages,
+    OT_UseDisplacementOnAll,
     OT_AssetDownloaderOperator,
     OBJECT_PT_panel
 )
