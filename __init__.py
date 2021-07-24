@@ -280,7 +280,7 @@ class properties(PropertyGroup):
     import_spec : BoolProperty(
         name = "Import specularity",
         description = "",
-        default = False
+        default = True
         )   
     import_rough : BoolProperty(
         name = "Import roughness",
