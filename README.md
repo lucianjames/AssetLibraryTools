@@ -8,17 +8,21 @@ AssetLibraryTools is a free addon which aims to speed up the process of creating
   * Add fake user to materials upon import
 * Batch import models of various filetypes (fbx, gltf, obj, x3d)
   * Hide imported models straight after import
-* Batch mark/unmark materials, meshes and objects as assets
-* Delete all materials
-* Delete all objects
 * Batch download CC0 assets from ambientcg.com via a python script
   * Filter assets by: Keyword, Resolution + filetype (For textures), File extension
   * Unzip downloaded zip files automatically
   * Delete zip files after unzip automatically
   * Skip downloading files that already exist
+* Batch mark/unmark materials, meshes and objects as assets
+* Delete all materials
+* Delete all objects
+* Delete all textures
+* Delete all images
+* Enable real displacement for cycles on all materials
 * And more to come
 
-![alt](https://user-images.githubusercontent.com/65134690/126383102-711e66ea-fddc-496f-8fec-12a3eba166a9.png)
+![image](https://user-images.githubusercontent.com/65134690/126872960-f9bb5b44-0c0b-40f4-aa58-e77b2a8b24df.png)
+
 
 # Plans for the future
 (Some of these are more likely to happen than others)
