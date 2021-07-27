@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "AssetLibraryTools is a free addon which aims to speed up the process of creating asset libraries with the asset browser, This addon is currently very much experimental as is the asset browser in blender.",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 1, 2),
+    "version": (0, 1, 3),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
@@ -243,9 +243,16 @@ class properties(PropertyGroup):
         maxlen = 1024,
         subtype = 'DIR_PATH'
         )
+    sbsar_import_path : StringProperty(
+        name = "Import directory",
+        description = "Choose a directory to batch import sbsar files from.\nSubdirectories are checked recursively",
+        default = "",
+        maxlen = 1024,
+        subtype = 'DIR_PATH'
+        )
     model_import_path : StringProperty(
         name = "Import directory",
-        description = "Choose a directory to batch import models from.\nSubdirectories are checked recursively.",
+        description = "Choose a directory to batch import models from.\nSubdirectories are checked recursively",
         default = "",
         maxlen = 1024,
         subtype = 'DIR_PATH'
@@ -407,6 +414,11 @@ class properties(PropertyGroup):
         description = "",
         default = False
         )
+    sbsarImport_expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
     modelImport_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
@@ -508,6 +520,26 @@ class OT_ImportPbrTextureSets(Operator):
                 mat.cycles.displacement_method = 'BOTH'
             i += 1
         DisplayMessageBox("Complete, {0} materials imported".format(i))
+        return{'FINISHED'}
+
+class OT_ImportSBSAR(Operator):
+    bl_label = "Import SBSAR files"
+    bl_idname = "alt.importsbsar"
+    
+    def execute(self, context):
+        scene = context.scene
+        tool = scene.assetlibrarytools
+        p = pathlib.Path(str(tool.sbsar_import_path))
+        i = 0
+        files = [x for x in p.glob('**/*.sbsar') if x.is_file()]
+        for f in files:
+            try:
+                bpy.ops.substance.load_sbsar(filepath=str(f), description_arg=True, files=[{"name":f.name, "name":f.name}], directory=str(f).replace(f.name, ""))
+                i += 1
+                print("SBSAR import success")
+            except:
+                print("SBSAR import failure")
+        DisplayMessageBox("Complete, {0} sbsar files imported".format(i))
         return{'FINISHED'}
 
 class OT_MarkAllMaterialsAsAssets(Operator):
@@ -691,7 +723,7 @@ class OBJECT_PT_panel(Panel):
         matImportRow.label(text="Batch import PBR texture sets as simple materials")
         if obj.matImport_expanded:
             matImportBox.prop(tool, "mat_import_path")
-            matImportBox.label(text='Make sure to uncheck "Relative Path"!')
+            matImportBox.label(text='Make sure to uncheck "Relative Path"!', icon="ERROR")
             matImportBox.operator("alt.importpbrtexturesets")
             matImportOptionsRow = matImportBox.row()
             matImportOptionsRow.prop(obj, "matImportOptions_expanded",
@@ -726,7 +758,7 @@ class OBJECT_PT_panel(Panel):
         modelImportRow.label(text="Batch import 3D models")
         if obj.modelImport_expanded:
             modelImportBox.prop(tool, "model_import_path")
-            modelImportBox.label(text='Make sure to uncheck "Relative Path"!')
+            modelImportBox.label(text='Make sure to uncheck "Relative Path"!', icon="ERROR")
             modelImportBox.operator("alt.importmodels")
             modelImportOptionsRow = modelImportBox.row()
             modelImportOptionsRow.prop(obj, "modelImportOptions_expanded",
@@ -795,7 +827,7 @@ class OBJECT_PT_panel(Panel):
         if obj.assetDownloaderRow_expanded:
             assetDownloaderRow = assetDownloaderBox.row()
             assetDownloaderBox.prop(tool, "downloader_save_path")
-            assetDownloaderBox.label(text='Make sure to uncheck "Relative Path"!')
+            assetDownloaderBox.label(text='Make sure to uncheck "Relative Path"!', icon="ERROR")
             assetDownloaderBox.prop(tool, "keywordFilter")
             assetDownloaderBox.prop(tool, "attributeFilter")
             assetDownloaderBox.prop(tool, "extensionFilter")
@@ -805,6 +837,20 @@ class OBJECT_PT_panel(Panel):
             assetDownloaderBox.prop(tool, "terminal")
             assetDownloaderBox.operator("alt.assetdownloader")
             
+        
+         # SBSAR import UI
+        sbsarImportBox = layout.box()
+        sbsarImportRow = sbsarImportBox.row()
+        sbsarImportRow.prop(obj, "sbsarImport_expanded",
+            icon="TRIA_DOWN" if obj.sbsarImport_expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False
+        )
+        sbsarImportRow.label(text="Batch import SBSAR files [EXPERIMENTAL]")
+        if obj.sbsarImport_expanded:
+            sbsarImportBox.label(text="Requires adobe substance 3D add-on for Blender", icon="ERROR")
+            sbsarImportBox.prop(tool, "sbsar_import_path")
+            sbsarImportBox.label(text='Make sure to uncheck "Relative Path"!', icon="ERROR")
+            sbsarImportBox.operator("alt.importsbsar")
 
 # ------------------------------------------------------------------------
 #    Registration
@@ -814,6 +860,7 @@ classes = (
     properties,
     OT_ImportModels,
     OT_ImportPbrTextureSets,
+    OT_ImportSBSAR,
     OT_MarkAllMaterialsAsAssets,
     OT_ClearMaterialAssets,
     OT_MarkAllMeshesAsAssets,
