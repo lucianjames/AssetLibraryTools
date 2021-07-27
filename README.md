@@ -13,6 +13,7 @@ AssetLibraryTools is a free addon which aims to speed up the process of creating
   * Unzip downloaded zip files automatically
   * Delete zip files after unzip automatically
   * Skip downloading files that already exist
+* Batch import SBSAR files via Adobe substance 3D add-on for blender
 * Batch mark/unmark materials, meshes and objects as assets
 * Delete all materials
 * Delete all objects
@@ -21,14 +22,4 @@ AssetLibraryTools is a free addon which aims to speed up the process of creating
 * Enable real displacement for cycles on all materials
 * And more to come
 
-![image](https://user-images.githubusercontent.com/65134690/126872960-f9bb5b44-0c0b-40f4-aa58-e77b2a8b24df.png)
-
-
-# Plans for the future
-(Some of these are more likely to happen than others)
-* Fix known issues
-* Extra options to customise the shader setup for batch material import
-  * Multiple pre-sets such as “basic PBR setup”, “complex PBR setup” (for example)
-* Multiple websites in asset downloading script
-* GitHub wiki
-* Quick YouTube tutorial
+![aaaaaa](https://user-images.githubusercontent.com/65134690/127211514-0f680bfc-5c81-44e1-ba82-96651695a2b5.png)
