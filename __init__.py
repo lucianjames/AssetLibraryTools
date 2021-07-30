@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "AssetLibraryTools is a free addon which aims to speed up the process of creating asset libraries with the asset browser, This addon is currently very much experimental as is the asset browser in blender.",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 1, 3),
+    "version": (0, 1, 4),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
@@ -258,6 +258,7 @@ class properties(PropertyGroup):
         subtype = 'DIR_PATH'
         )
     
+    
     # Material import options
     use_fake_user : BoolProperty(
         name = "Use fake user",
@@ -315,6 +316,7 @@ class properties(PropertyGroup):
         default = True
         )
     
+    
     # Model import properties
     hide_after_import : BoolProperty(
         name = "Hide models after import",
@@ -341,6 +343,7 @@ class properties(PropertyGroup):
         description = "",
         default = True
         )
+    
     
     # CC0AssetDownloader properties
     downloader_save_path : StringProperty(
@@ -403,6 +406,27 @@ class properties(PropertyGroup):
         default = True
         )
     
+    
+    # Asset management properties
+    markunmark : EnumProperty(
+        name="Operation",
+        description="Choose whether to mark assets, or unmark assets",
+        items=[ ('mark', "Mark assets", ""),
+                ('unmark', "Unmark assets", ""),
+               ]
+        )
+    assettype : EnumProperty(
+        name="On type",
+        description="Choose a type of asset to mark/unmark",
+        items=[ ('objects', "Objects", ""),
+                ('materials', "Materials", ""),
+                ('images', "Images", ""),
+                ('textures', "Textures", ""),
+                ('meshes', "Meshes", ""),
+               ]
+        )
+    
+    
     # UI properties
     matImport_expanded : BoolProperty(
         name = "Click to expand",
@@ -429,7 +453,7 @@ class properties(PropertyGroup):
         description = "",
         default = False
         )
-    batchOpsRow_expanded : BoolProperty(
+    assetMngmtRow_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
@@ -510,6 +534,7 @@ class OT_ImportPbrTextureSets(Operator):
         scene = context.scene
         tool = scene.assetlibrarytools
         i = 0
+        i2 = 0
         subdirectories = [x for x in pathlib.Path(tool.mat_import_path).iterdir() if x.is_dir()]
         for sd in subdirectories:
             filePaths = [x for x in pathlib.Path(sd).iterdir() if x.is_file()]
@@ -518,8 +543,20 @@ class OT_ImportPbrTextureSets(Operator):
                 mat.use_fake_user = True
             if tool.use_real_displacement == True:
                 mat.cycles.displacement_method = 'BOTH'
-            i += 1
-        DisplayMessageBox("Complete, {0} materials imported".format(i))
+            # Delete the material if it contains no textures
+            hasTex = False
+            for n in mat.node_tree.nodes:
+                if n.type == 'TEX_IMAGE':
+                    hasTex = True
+            if hasTex == False:
+                bpy.data.materials.remove(mat)
+                i2 += 1
+            else:
+                i += 1
+        if i2 > 0:
+            DisplayMessageBox("Complete, {0} materials imported, {1} imported material(s) were deleted after import because they contained no textures".format(i,i2))
+        else:
+            DisplayMessageBox("Complete, {0} materials imported".format(i))
         return{'FINISHED'}
 
 class OT_ImportSBSAR(Operator):
@@ -542,76 +579,68 @@ class OT_ImportSBSAR(Operator):
         DisplayMessageBox("Complete, {0} sbsar files imported".format(i))
         return{'FINISHED'}
 
-class OT_MarkAllMaterialsAsAssets(Operator):
-    bl_label = "Mark all materials as assets"
-    bl_idname = "alt.markallmaterialssasassets"
-    
-    def execute(self, context):
-        i = 0
-        for mat in bpy.data.materials:
-            mat.asset_mark()
-            i += 1
-        DisplayMessageBox("Complete, {0} assets marked".format(i))
-        return {'FINISHED'}
 
-class OT_ClearMaterialAssets(Operator):
-    bl_label = "Unmark all material assets"
-    bl_idname = "alt.clearmaterialassets"
-    
-    def execute(self, context):
-        i = 0
-        for mat in bpy.data.materials:
-            mat.asset_clear()
-            i += 1
-        DisplayMessageBox("Complete, {0} assets unmarked".format(i))
-        return {'FINISHED'}
 
-class OT_MarkAllMeshesAsAssets(Operator):
-    bl_label = "Mark all meshes as assets"
-    bl_idname = "alt.markallmeshesasassets"
-    
-    def execute(self, context):
-        i = 0
-        for mesh in bpy.data.meshes:
-            mesh.asset_mark()
-            i += 1
-        DisplayMessageBox("Complete, {0} assets marked".format(i))
-        return {'FINISHED'}
 
-class OT_ClearMeshAssets(Operator):
-    bl_label = "Unmark all mesh assets"
-    bl_idname = "alt.clearmeshassets"
-    
-    def execute(self, context):
-        i = 0
-        for mesh in bpy.data.meshes:
-            mesh.asset_clear()
-            i += 1
-        DisplayMessageBox("Complete, {0} assets unmarked".format(i))
-        return {'FINISHED'}
 
-class OT_MarkAllObjectsAsAssets(Operator):
-    bl_label = "Mark all objects as assets"
-    bl_idname = "alt.markallobjectsasassets"
-    
-    def execute(self, context):
-        i = 0
-        for object in bpy.data.objects:
-            object.asset_mark()
-            i += 1
-        DisplayMessageBox("Complete, {0} assets marked".format(i))
-        return {'FINISHED'}
 
-class OT_ClearObjectAssets(Operator):
-    bl_label = "Unmark all object assets"
-    bl_idname = "alt.clearobjectassets"
+
+class OT_ManageAssets(Operator):
+    bl_label = "Go"
+    bl_idname = "alt.manageassets"
     
     def execute(self, context):
+        scene = context.scene
+        tool = scene.assetlibrarytools
         i = 0
-        for object in bpy.data.objects:
-            object.asset_clear()
-            i += 1
-        DisplayMessageBox("Complete, {0} assets unmarked".format(i))
+        
+        # IF statement hell
+        if tool.markunmark == 'mark':
+            if tool.assettype == 'objects':
+                for object in bpy.data.objects:
+                    object.asset_mark()
+                    i += 1
+            if tool.assettype == 'materials':
+                for mat in bpy.data.materials:
+                    mat.asset_mark()
+                    i += 1
+            if tool.assettype == 'images':
+                for image in bpy.data.images:
+                    image.asset_mark()
+                    i += 1      
+            if tool.assettype == 'textures':
+                for texture in bpy.data.textures:
+                    texture.asset_mark()
+                    i += 1   
+            if tool.assettype == 'meshes':
+                for mesh in bpy.data.meshes:
+                    mesh.asset_mark()
+                    i += 1
+            DisplayMessageBox("Complete, {0} assets marked".format(i))
+        
+        if tool.markunmark == 'unmark':
+            if tool.assettype == 'objects':
+                for object in bpy.data.objects:
+                    object.asset_clear()
+                    i += 1
+            if tool.assettype == 'materials':
+                for mat in bpy.data.materials:
+                    mat.asset_clear()
+                    i += 1 
+            if tool.assettype == 'images':
+                for image in bpy.data.images:
+                    image.asset_clear()
+                    i += 1  
+            if tool.assettype == 'textures':
+                for texture in bpy.data.textures:
+                    texture.asset_clear()
+                    i += 1
+            if tool.assettype == 'meshes':
+                for mesh in bpy.data.meshes:
+                    mesh.asset_clear()
+                    i += 1
+            DisplayMessageBox("Complete, {0} assets unmarked".format(i))
+        
         return {'FINISHED'}
 
 class OT_DeleteAllMaterials(Operator):
@@ -636,6 +665,18 @@ class OT_DeleteAllObjects(Operator):
             bpy.data.objects.remove(object)
             i += 1
         DisplayMessageBox("Complete, {0} objects deleted".format(i))
+        return {'FINISHED'}
+
+class OT_DeleteAllMeshes(Operator):
+    bl_label = "Delete all meshes"
+    bl_idname = "alt.deleteallmeshes"
+    
+    def execute(self, context):
+        i = 0
+        for mesh in bpy.data.meshes:
+            bpy.data.meshes.remove(mesh)
+            i += 1
+        DisplayMessageBox("Complete, {0} meshes deleted".format(i))
         return {'FINISHED'}
 
 class OT_DeleteAllTextures(Operator):
@@ -777,25 +818,20 @@ class OBJECT_PT_panel(Panel):
                 modelImportBox.prop(tool, "import_x3d")
         
         
-        # Other batch operations UI
-        batchOpBox = layout.box()
-        batchOpsRow = batchOpBox.row()
-        batchOpsRow.prop(obj, "batchOpsRow_expanded",
-            icon="TRIA_DOWN" if obj.batchOpsRow_expanded else "TRIA_RIGHT",
+        # Asset management UI
+        assetMngmtBox = layout.box()
+        assetMngmtRow = assetMngmtBox.row()
+        assetMngmtRow.prop(obj, "assetMngmtRow_expanded",
+            icon="TRIA_DOWN" if obj.assetMngmtRow_expanded else "TRIA_RIGHT",
             icon_only=True, emboss=False
         )
-        batchOpsRow.label(text="Batch mark/clear operations")
-        if obj.batchOpsRow_expanded:
-            batchOpsRow = batchOpBox.row()
-            batchOpBox.label(text="Batch mark/clear operations")
-            batchOpBox.operator("alt.markallmaterialssasassets")
-            batchOpBox.operator("alt.clearmaterialassets")
-            batchOpBox.separator()
-            batchOpBox.operator("alt.markallmeshesasassets")
-            batchOpBox.operator("alt.clearmeshassets")
-            batchOpBox.separator()
-            batchOpBox.operator("alt.markallobjectsasassets")
-            batchOpBox.operator("alt.clearobjectassets")
+        assetMngmtRow.label(text="Asset browser operations")
+        if obj.assetMngmtRow_expanded:
+            assetMngmtRow = assetMngmtBox.row()
+            assetMngmtBox.label(text="Batch mark/unmark assets:")
+            assetMngmtBox.prop(tool, "markunmark")
+            assetMngmtBox.prop(tool, "assettype")
+            assetMngmtBox.operator("alt.manageassets")
         
         
         # Utility operations UI
@@ -810,6 +846,7 @@ class OBJECT_PT_panel(Panel):
             utilRow = utilBox.row()
             utilBox.operator("alt.deleteallmaterials")
             utilBox.operator("alt.deleteallobjects")
+            utilBox.operator("alt.deleteallmeshes")
             utilBox.operator("alt.deletealltextures")
             utilBox.operator("alt.deleteallimages")
             utilBox.separator()
@@ -861,14 +898,10 @@ classes = (
     OT_ImportModels,
     OT_ImportPbrTextureSets,
     OT_ImportSBSAR,
-    OT_MarkAllMaterialsAsAssets,
-    OT_ClearMaterialAssets,
-    OT_MarkAllMeshesAsAssets,
-    OT_ClearMeshAssets,
-    OT_MarkAllObjectsAsAssets,
-    OT_ClearObjectAssets,
+    OT_ManageAssets,
     OT_DeleteAllMaterials,
     OT_DeleteAllObjects,
+    OT_DeleteAllMeshes,
     OT_DeleteAllTextures,
     OT_DeleteAllImages,
     OT_UseDisplacementOnAll,
