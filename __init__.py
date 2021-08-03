@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "AssetLibraryTools is a free addon which aims to speed up the process of creating asset libraries with the asset browser, This addon is currently very much experimental as is the asset browser in blender.",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 1, 4),
+    "version": (0, 1, 5),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
@@ -352,6 +352,19 @@ class properties(PropertyGroup):
         )
     
     
+    # Utilities panel properties
+    deleteType : EnumProperty(
+        name="Delete all",
+        description="Choose type to batch delete",
+        items=[ ('objects', "Objects", ""),
+                ('materials', "Materials", ""),
+                ('images', "Images", ""),
+                ('textures', "Textures", ""),
+                ('meshes', "Meshes", ""),
+               ]
+        )
+    
+    
     # CC0AssetDownloader properties
     downloader_save_path : StringProperty(
         name = "Save location",
@@ -614,63 +627,34 @@ class OT_ManageAssets(Operator):
         return {'FINISHED'}
 
 
-class OT_DeleteAllObjects(Operator):
-    bl_label = "Delete all objects"
-    bl_idname = "alt.deleteallobjects"
+class OT_BatchDelete(Operator):
+    bl_label = "Go"
+    bl_idname = "alt.batchdelete"
     def execute(self, context):
-        i = 0
-        for object in bpy.data.objects:
-            bpy.data.objects.remove(object)
-            i += 1
-        DisplayMessageBox("Complete, {0} objects deleted".format(i))
-        return {'FINISHED'}
-
-
-class OT_DeleteAllMaterials(Operator):
-    bl_label = "Delete all materials"
-    bl_idname = "alt.deleteallmaterials"
-    def execute(self, context):
-        i = 0
-        for mat in bpy.data.materials:
-            bpy.data.materials.remove(mat)
-            i += 1
-        DisplayMessageBox("Complete, {0} materials deleted".format(i))
-        return {'FINISHED'}
-
-
-class OT_DeleteAllImages(Operator):
-    bl_label = "Delete all images"
-    bl_idname = "alt.deleteallimages"
-    def execute(self, context):
-        i = 0
-        while len(bpy.data.images) > 0: # Cant use a for loop like the other "delete all" operations for some reason
-            bpy.data.images.remove(bpy.data.images[0])
-            i += 1
-        DisplayMessageBox("Complete, {0} images deleted".format(i))
-        return {'FINISHED'}
-
-
-class OT_DeleteAllTextures(Operator):
-    bl_label = "Delete all textures"
-    bl_idname = "alt.deletealltextures"
-    def execute(self, context):
-        i = 0
-        for tex in bpy.data.textures:
-            bpy.data.textures.remove(tex)
-            i += 1
-        DisplayMessageBox("Complete, {0} textures deleted".format(i))
-        return {'FINISHED'}
-
-
-class OT_DeleteAllMeshes(Operator):
-    bl_label = "Delete all meshes"
-    bl_idname = "alt.deleteallmeshes"
-    def execute(self, context):
-        i = 0
-        for mesh in bpy.data.meshes:
-            bpy.data.meshes.remove(mesh)
-            i += 1
-        DisplayMessageBox("Complete, {0} meshes deleted".format(i))
+        scene = context.scene
+        tool = scene.assetlibrarytools
+        i = 0 # Number of items deleted
+        if tool.deleteType == 'objects':
+            for object in bpy.data.objects:
+                bpy.data.objects.remove(object)
+                i += 1
+        if tool.deleteType == 'materials':
+            for mat in bpy.data.materials:
+                bpy.data.materials.remove(mat)
+                i += 1
+        if tool.deleteType == 'images':
+            while len(bpy.data.images) > 0: # Cant use a for loop like the other "delete all" operations for some reason
+                bpy.data.images.remove(bpy.data.images[0])
+                i += 1
+        if tool.deleteType == 'textures':
+            for tex in bpy.data.textures:
+                bpy.data.textures.remove(tex)
+                i += 1    
+        if tool.deleteType == 'meshes':
+            for mesh in bpy.data.meshes:
+                bpy.data.meshes.remove(mesh)
+                i += 1
+        DisplayMessageBox("Done, {0} {1} deleted.".format(i, tool.deleteType))
         return {'FINISHED'}
 
 
@@ -834,11 +818,8 @@ class OBJECT_PT_panel(Panel):
         utilRow.label(text="Utilities")
         if obj.utilRow_expanded:
             utilRow = utilBox.row()
-            utilBox.operator("alt.deleteallobjects")
-            utilBox.operator("alt.deleteallmaterials")
-            utilBox.operator("alt.deleteallimages")
-            utilBox.operator("alt.deletealltextures")
-            utilBox.operator("alt.deleteallmeshes")
+            utilBox.prop(tool, "deleteType")
+            utilBox.operator("alt.batchdelete")
             utilBox.separator()
             utilBox.operator("alt.userealdispall")
             
@@ -889,11 +870,7 @@ classes = (
     OT_ImportPbrTextureSets,
     OT_ImportModels,
     OT_ManageAssets,
-    OT_DeleteAllObjects,
-    OT_DeleteAllMaterials,
-    OT_DeleteAllImages,
-    OT_DeleteAllTextures,
-    OT_DeleteAllMeshes,
+    OT_BatchDelete,
     OT_UseDisplacementOnAll,
     OT_AssetDownloaderOperator,
     OT_ImportSBSAR,
