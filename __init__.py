@@ -240,6 +240,11 @@ class properties(PropertyGroup):
         maxlen = 1024,
         subtype = 'DIR_PATH'
         )
+    skip_existing : BoolProperty(
+        name = "Skip existing",
+        description = "Dont import materials if a material with the same name already exists",
+        default = True
+        )
     use_fake_user : BoolProperty(
         name = "Use fake user",
         description = "Use fake user on imported materials",
@@ -484,34 +489,49 @@ class properties(PropertyGroup):
 #    Operators
 # ------------------------------------------------------------------------
 
-class OT_ImportPbrTextureSets(Operator):
+class OT_BatchImportPBR(Operator):
     bl_label = "Import PBR textures"
-    bl_idname = "alt.importpbrtexturesets"
+    bl_idname = "alt.batchimportpbr"
     def execute(self, context):
         scene = context.scene
         tool = scene.assetlibrarytools
         i = 0 # Number of materials imported
         i2 = 0 # Number of materials deleted (due to no textures after import)
+        i3 = 0 # Number of materials skipped due to them already existing
+        existing_mat_names = []
         subdirectories = [x for x in pathlib.Path(tool.mat_import_path).iterdir() if x.is_dir()] # Get subdirs in directory selected in UI
         for sd in subdirectories:
             filePaths = [x for x in pathlib.Path(sd).iterdir() if x.is_file()] # Get filepaths of textures
-            mat = shaderSetup.simplePrincipledSetup(sd.name, filePaths) # Create shader using filepaths of textures
-            if tool.use_fake_user == True: # Enable fake user (if desired)
-                mat.use_fake_user = True
-            if tool.use_real_displacement == True: # Enable real displacement (if desired)
-                mat.cycles.displacement_method = 'BOTH'
-            # Delete the material if it contains no textures
-            hasTex = False
-            for n in mat.node_tree.nodes: 
-                if n.type == 'TEX_IMAGE': # Check if shader contains textures, if yes, then its worth keeping
-                    hasTex = True
-            if hasTex == False:
-                bpy.data.materials.remove(mat) # Delete material if it contains no textures
-                i2 += 1
+            # Get existing material names if skipping existing materials is turned on
+            if tool.skip_existing == True:
+                existing_mat_names = []
+                for mat in bpy.data.materials:
+                    existing_mat_names.append(mat.name)
+            # check if the material thats about to be imported exists or not, or if we dont care about skipping existing materials.
+            if (sd.name not in existing_mat_names) or (tool.skip_existing != True):
+                mat = shaderSetup.simplePrincipledSetup(sd.name, filePaths) # Create shader using filepaths of textures
+                if tool.use_fake_user == True: # Enable fake user (if desired)
+                    mat.use_fake_user = True
+                if tool.use_real_displacement == True: # Enable real displacement (if desired)
+                    mat.cycles.displacement_method = 'BOTH'
+                # Delete the material if it contains no textures
+                hasTex = False
+                for n in mat.node_tree.nodes: 
+                    if n.type == 'TEX_IMAGE': # Check if shader contains textures, if yes, then its worth keeping
+                        hasTex = True
+                if hasTex == False:
+                    bpy.data.materials.remove(mat) # Delete material if it contains no textures
+                    i2 += 1
+                else:
+                    i += 1
             else:
-                i += 1
-        if i2 > 0:
-            DisplayMessageBox("Complete, {0} materials imported, {1} imported material(s) were deleted after import because they contained no textures (No recognised textures were found in the folder)".format(i,i2))
+                i3 += 1
+        if (i2 > 0) and (i3 > 0):
+            DisplayMessageBox("Complete, {0} materials imported, {1} were deleted after import because they contained no textures (No recognised textures were found in the folder), {2} skipped because they already exist".format(i,i2,i3))
+        elif i3 > 0:
+            DisplayMessageBox("Complete, {0} materials imported. {1} skipped because they already exist".format(i, i3))
+        elif i2 > 0:
+            DisplayMessageBox("Complete, {0} materials imported, {1} were deleted after import because they contained no textures (No recognised textures were found in the folder)".format(i,i2))
         else:
             DisplayMessageBox("Complete, {0} materials imported".format(i))
         return{'FINISHED'}
@@ -739,7 +759,7 @@ class OBJECT_PT_panel(Panel):
         if obj.matImport_expanded:
             matImportBox.prop(tool, "mat_import_path")
             matImportBox.label(text='Make sure to uncheck "Relative Path"!', icon="ERROR")
-            matImportBox.operator("alt.importpbrtexturesets")
+            matImportBox.operator("alt.batchimportpbr")
             matImportOptionsRow = matImportBox.row()
             matImportOptionsRow.prop(obj, "matImportOptions_expanded",
                 icon="TRIA_DOWN" if obj.matImportOptions_expanded else "TRIA_RIGHT",
@@ -748,9 +768,13 @@ class OBJECT_PT_panel(Panel):
             matImportOptionsRow.label(text="Import options: ")
             if obj.matImportOptions_expanded:
                 matImportOptionsRow = matImportBox.row()
+                matImportBox.label(text="Import settings:")
+                matImportBox.prop(tool, "skip_existing")
+                matImportBox.separator()
                 matImportBox.label(text="Material settings:")
                 matImportBox.prop(tool, "use_fake_user")
                 matImportBox.prop(tool, "use_real_displacement")
+                matImportBox.separator()
                 matImportBox.label(text="Import following textures into materials (if found):")
                 matImportBox.prop(tool, "import_diff")
                 matImportBox.prop(tool, "import_sss")
@@ -785,6 +809,7 @@ class OBJECT_PT_panel(Panel):
                 modelImportOptionsRow = modelImportBox.row()
                 modelImportBox.label(text="Model options:")
                 modelImportBox.prop(tool, "hide_after_import")
+                modelImportBox.separator()
                 modelImportBox.label(text="Search for and import the following filetypes:")
                 modelImportBox.prop(tool, "import_fbx")
                 modelImportBox.prop(tool, "import_gltf")
@@ -867,7 +892,7 @@ class OBJECT_PT_panel(Panel):
 
 classes = (
     properties,
-    OT_ImportPbrTextureSets,
+    OT_BatchImportPBR,
     OT_ImportModels,
     OT_ManageAssets,
     OT_BatchDelete,
