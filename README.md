@@ -6,6 +6,7 @@ AssetLibraryTools is a free addon which aims to speed up the process of creating
 * Batch import PBR materials from texture sets
   * Add real displacement to materials upon import
   * Add fake user to materials upon import
+  * Skip materials that already exist
 * Batch import models of various filetypes (fbx, gltf, obj, x3d)
   * Hide imported models straight after import
 * Batch download CC0 assets from ambientcg.com via a python script
@@ -15,12 +16,8 @@ AssetLibraryTools is a free addon which aims to speed up the process of creating
   * Skip downloading files that already exist
 * Batch import SBSAR files via Adobe substance 3D add-on for blender
 * Batch mark/unmark materials, meshes, objects, images, and textures as assets
-* Delete all materials
-* Delete all objects
-* Delete all textures
-* Delete all meshes
-* Delete all images
+* Batch delete all materials/objects/textures/images/meshes
 * Enable real displacement for cycles on all materials
 * And more to come
 
-![addon](https://user-images.githubusercontent.com/65134690/127656343-be1c810f-05b1-4b7a-9584-b35f7ff1a770.png)
+![scrsht](https://user-images.githubusercontent.com/65134690/128054360-ca6fc17b-3963-4528-a197-324a1b0d79ae.png)
