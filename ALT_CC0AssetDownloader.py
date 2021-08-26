@@ -1,10 +1,15 @@
-import requests
 import csv
 import copy
 import zipfile
 import os
 import re
 import sys
+try:
+    import requests
+except:
+    print('Module "requests" not found, attempting to install...')
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
 
 # Converts the string "None" to Nonetype
 def strToNoneType(x):
