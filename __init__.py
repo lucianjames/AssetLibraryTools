@@ -2,12 +2,12 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "AssetLibraryTools is a free addon which aims to speed up the process of creating asset libraries with the asset browser, This addon is currently very much experimental as is the asset browser in blender.",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 1, 5),
+    "version": (0, 1, 6),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
-    "wiki_url": "",
-    "tracker_url": "",
+    "wiki_url": "https://github.com/LJ3D/AssetLibraryTools/wiki",
+    "tracker_url": "https://github.com/LJ3D/AssetLibraryTools",
     "category": "3D View"
 }
 
@@ -88,7 +88,7 @@ def DisplayMessageBox(message = "", title = "Info", icon = 'INFO'):
         self.layout.label(text=message)
     bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
 
-# class with functions for setting up shaders
+# Class with functions for setting up shaders
 class shaderSetup():
     
     def createNode(mat, type, name="newNode", location=(0,0)):
@@ -495,9 +495,9 @@ class OT_BatchImportPBR(Operator):
     def execute(self, context):
         scene = context.scene
         tool = scene.assetlibrarytools
-        i = 0 # Number of materials imported
-        i2 = 0 # Number of materials deleted (due to no textures after import)
-        i3 = 0 # Number of materials skipped due to them already existing
+        n_imp = 0 # Number of materials imported
+        n_del = 0 # Number of materials deleted (due to no textures after import)
+        n_skp = 0 # Number of materials skipped due to them already existing
         existing_mat_names = []
         subdirectories = [x for x in pathlib.Path(tool.mat_import_path).iterdir() if x.is_dir()] # Get subdirs in directory selected in UI
         for sd in subdirectories:
@@ -521,19 +521,19 @@ class OT_BatchImportPBR(Operator):
                         hasTex = True
                 if hasTex == False:
                     bpy.data.materials.remove(mat) # Delete material if it contains no textures
-                    i2 += 1
+                    n_del += 1
                 else:
-                    i += 1
+                    n_imp += 1
             else:
-                i3 += 1
-        if (i2 > 0) and (i3 > 0):
-            DisplayMessageBox("Complete, {0} materials imported, {1} were deleted after import because they contained no textures (No recognised textures were found in the folder), {2} skipped because they already exist".format(i,i2,i3))
-        elif i3 > 0:
-            DisplayMessageBox("Complete, {0} materials imported. {1} skipped because they already exist".format(i, i3))
-        elif i2 > 0:
-            DisplayMessageBox("Complete, {0} materials imported, {1} were deleted after import because they contained no textures (No recognised textures were found in the folder)".format(i,i2))
+                n_skip += 1
+        if (n_del > 0) and (n_skp > 0):
+            DisplayMessageBox("Complete, {0} materials imported, {1} were deleted after import because they contained no textures (No recognised textures were found in the folder), {2} skipped because they already exist".format(n_imp,n_del,n_skp))
+        elif n_skp > 0:
+            DisplayMessageBox("Complete, {0} materials imported. {1} skipped because they already exist".format(n_imp, n_skp))
+        elif n_del > 0:
+            DisplayMessageBox("Complete, {0} materials imported, {1} were deleted after import because they contained no textures (No recognised textures were found in the folder)".format(n_imp,n_del))
         else:
-            DisplayMessageBox("Complete, {0} materials imported".format(i))
+            DisplayMessageBox("Complete, {0} materials imported".format(n_imp))
         return{'FINISHED'}
 
 
@@ -541,7 +541,7 @@ class OT_ImportModels(Operator):
     bl_label = "Import models"
     bl_idname = "alt.importmodels"
     
-    # hide new objects works by comparing a list of objects before (x) happened with the current list via bpy.context.scene.objects to get the list of new objects, then hides those new objects
+    # Hide new objects works by comparing a list of objects before (x) happened with the current list via bpy.context.scene.objects to get the list of new objects, then hides those new objects
     def hideNewObjects(old_objects):
         scene = bpy.context.scene
         tool = scene.assetlibrarytools
