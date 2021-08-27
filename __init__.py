@@ -525,7 +525,7 @@ class OT_BatchImportPBR(Operator):
                 else:
                     n_imp += 1
             else:
-                n_skip += 1
+                n_skp += 1
         if (n_del > 0) and (n_skp > 0):
             DisplayMessageBox("Complete, {0} materials imported, {1} were deleted after import because they contained no textures (No recognised textures were found in the folder), {2} skipped because they already exist".format(n_imp,n_del,n_skp))
         elif n_skp > 0:
