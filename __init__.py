@@ -805,6 +805,19 @@ class OT_BatchDelete(Operator):
         return {'FINISHED'}
 
 
+class OT_SimpleDelDupeMaterials(Operator):
+    bl_label = "Clean up duplicate materials (simple)"
+    bl_idname = "alt.simpledeldupemats"
+    def execute(self, context):
+        for obj in bpy.data.objects:
+            for slt in obj.material_slots:
+                part = slt.name.rpartition('.')
+                if part[2].isnumeric() and part[0] in bpy.data.materials:
+                    slt.material = bpy.data.materials.get(part[0])
+        DisplayMessageBox("Done")
+        return {'FINISHED'}
+
+
 class OT_UseDisplacementOnAll(Operator):
     bl_label = "Use real displacement on all materials"
     bl_idname = "alt.userealdispall"
@@ -1008,9 +1021,11 @@ class OBJECT_PT_panel(Panel):
             utilBox.prop(tool, "deleteType")
             utilBox.operator("alt.batchdelete")
             utilBox.separator()
+            utilBox.label(text='Deletes based on material name, not material contents', icon="ERROR")
+            utilBox.operator("alt.simpledeldupemats")
+            utilBox.separator()
             utilBox.prop(tool, "dispNewScale")
             utilBox.operator("alt.changealldispscale")
-            utilBox.separator()
             utilBox.operator("alt.userealdispall")
             
         
@@ -1064,6 +1079,7 @@ classes = (
     OT_BatchAppend,
     OT_ManageAssets,
     OT_BatchDelete,
+    OT_SimpleDelDupeMaterials,
     OT_UseDisplacementOnAll,
     OT_ChangeAllDisplacementScale,
     OT_AssetDownloaderOperator,
