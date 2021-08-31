@@ -335,6 +335,28 @@ class properties(PropertyGroup):
         description = "",
         default = True
         )
+        
+        
+    # Batch append properties
+    append_path : StringProperty(
+        name = "Import directory",
+        description = "Choose a directory to batch append from.",
+        default = "",
+        maxlen = 1024,
+        subtype = 'DIR_PATH'
+        )
+    append_recursive_search : BoolProperty(
+        name = "Search for .blend files in surbdirs recursively",
+        description = "",
+        default = False
+        )
+    appendType : EnumProperty(
+        name="Append",
+        description="Choose type to append",
+        items=[ ('objects', "Objects", ""),
+                ('materials', "Materials", ""),
+                ]
+        )
     
     
     # Asset management properties
@@ -354,6 +376,16 @@ class properties(PropertyGroup):
                 ('textures', "Textures", ""),
                 ('meshes', "Meshes", ""),
                ]
+        )
+    deleteLights : BoolProperty(
+        name = "Dont append lights",
+        description = "",
+        default = True
+        )
+    deleteCameras : BoolProperty(
+        name = "Dont append cameras",
+        description = "",
+        default = True
         )
     
     
@@ -456,6 +488,11 @@ class properties(PropertyGroup):
         default = False
         )
     matImportOptions_expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
+    append_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
@@ -595,6 +632,49 @@ class OT_ImportModels(Operator):
                 OT_ImportModels.hideNewObjects(old_objects)
                 i += 1
         DisplayMessageBox("Complete, {0} models imported".format(i))
+        return{'FINISHED'}
+
+
+class OT_BatchAppend(Operator):
+    bl_label = "Append"
+    bl_idname = "alt.batchappend"
+    def execute(self, context):
+        scene = context.scene
+        tool = scene.assetlibrarytools
+        p = pathlib.Path(str(tool.append_path))
+        link = False # append, set to true to keep the link to the original file
+        if tool.append_recursive_search == True:
+            blendFilePaths = [x for x in p.glob('**/*.blend') if x.is_file()] # Get filepaths of files with the extension .blend in the selected directory (and subdirs, recursively)
+        else:
+            blendFilePaths = [x for x in p.glob('*.blend') if x.is_file()] # Get filepaths of files with the extension .blend in the selected directory    
+        for path in blendFilePaths:
+            if tool.appendType == 'objects':
+                # link all objects
+                with bpy.data.libraries.load(str(path), link=link) as (data_from, data_to):
+                    data_to.objects = data_from.objects
+                #link object to current scene
+                for obj in data_to.objects:
+                    removed = False
+                    if obj is not None:
+                       #bpy.context.scene.objects.link(obj) # Blender 2.7x
+                       bpy.context.collection.objects.link(obj) # Blender 2.8x   
+                    # remove cameras
+                    if removed == False and tool.deleteCameras == True: # This stops an error from occuring if obj is already deleted
+                        if obj.type == 'CAMERA':
+                            bpy.data.objects.remove(obj)
+                            removed = True      
+                    # remove lights
+                    if removed == False and tool.deleteLights == True: # This stops an error from occuring if obj is already deleted
+                        if obj.type == 'LIGHT':
+                            bpy.data.objects.remove(obj)
+                            removed = True
+            if tool.appendType == 'materials':
+                with bpy.data.libraries.load(str(path), link=link) as (data_from, data_to):
+                    data_to.materials = data_from.materials
+        if tool.appendType == 'objects':
+             DisplayMessageBox("Complete, objects appended")
+        if tool.appendType == 'materials':
+            DisplayMessageBox("Complete, materials appended")
         return{'FINISHED'}
 
 
@@ -840,6 +920,25 @@ class OBJECT_PT_panel(Panel):
                 modelImportBox.prop(tool, "import_x3d")
         
         
+        # Append from other .blend UI
+        appendBox = layout.box()
+        appendRow = appendBox.row()
+        appendRow.prop(obj, "append_expanded",
+            icon="TRIA_DOWN" if obj.append_expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False
+        )
+        appendRow.label(text="Batch append from .blend files")
+        if obj.append_expanded:
+            appendBox.prop(tool, "append_path")
+            appendBox.label(text='Make sure to uncheck "Relative Path"!', icon="ERROR")
+            appendBox.prop(tool, "append_recursive_search")
+            appendBox.prop(tool, "appendType")
+            if obj.appendType == 'objects':
+                appendBox.prop(tool, "deleteLights")
+                appendBox.prop(tool, "deleteCameras")
+            appendBox.operator("alt.batchappend")
+            
+            
         # Asset browser operations UI
         assetBrowserOpsBox = layout.box()
         assetBrowserOpsRow = assetBrowserOpsBox.row()
@@ -920,6 +1019,7 @@ classes = (
     properties,
     OT_BatchImportPBR,
     OT_ImportModels,
+    OT_BatchAppend,
     OT_ManageAssets,
     OT_BatchDelete,
     OT_UseDisplacementOnAll,
