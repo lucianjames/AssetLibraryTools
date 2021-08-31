@@ -1133,10 +1133,10 @@ class OBJECT_PT_panel(Panel):
         )
         snapshotRow.label(text="Asset snapshot")
         if obj.snapshotRow_expanded:
-            layout.label(text='Sometimes crashes. SAVE YOUR FILES', icon="ERROR")
-            layout.prop(tool, "resolution")
-            layout.operator("view3d.object_preview")
-            layout.operator("view3d.asset_snaphot_collection")
+            snapshotBox.label(text='Sometimes crashes. SAVE YOUR FILES', icon="ERROR")
+            snapshotBox.prop(tool, "resolution")
+            snapshotBox.operator("view3d.object_preview")
+            snapshotBox.operator("view3d.asset_snaphot_collection")
         
         
         # Asset downloader UI
