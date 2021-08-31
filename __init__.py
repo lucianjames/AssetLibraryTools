@@ -453,6 +453,16 @@ class properties(PropertyGroup):
         )
     
     
+    # Asset snapshot panel properties
+    resolution : IntProperty(
+            name="Preview Resolution",
+            description="Resolution to render the preview",
+            min=1,
+            soft_max=500,
+            default=256
+            )
+    
+    
     # CC0AssetDownloader properties
     downloader_save_path : StringProperty(
         name = "Save location",
@@ -537,11 +547,6 @@ class properties(PropertyGroup):
         description = "",
         default = False
         )
-    sbsarImport_expanded : BoolProperty(
-        name = "Click to expand",
-        description = "",
-        default = False
-        )
     modelImport_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
@@ -562,12 +567,21 @@ class properties(PropertyGroup):
         description = "",
         default = False
         )
+    snapshotRow_expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
     assetDownloaderRow_expanded : BoolProperty(
         name = "Click to expand",
         description = "",
         default = False
         )
-
+    sbsarImport_expanded : BoolProperty(
+        name = "Click to expand",
+        description = "",
+        default = False
+        )
 
 # ------------------------------------------------------------------------
 #    Operators
@@ -844,6 +858,87 @@ class OT_ChangeAllDisplacementScale(Operator):
         return {'FINISHED'}
 
 
+def snapshot(self,context,ob):
+    scene = context.scene
+    tool = scene.assetlibrarytools
+    #Save some basic settings
+    areatype = context.area.type
+    if bpy.context.scene.camera == None:
+        bpy.ops.object.camera_add()
+    camera = bpy.context.scene.camera    
+    camerapos = camera.location.copy()
+    camerarot = camera.rotation_euler.copy()
+    hold_x = bpy.context.scene.render.resolution_x
+    hold_y = bpy.context.scene.render.resolution_y 
+    filepath = bpy.context.scene.render.filepath
+    # Find objects that are hidden in viewport and hide them in render
+    tempHidden = []
+    for o in bpy.data.objects:
+        if o.hide_get() == True:
+            o.hide_render = True
+            tempHidden.append(o)
+    # Change Settings
+    bpy.context.scene.render.resolution_y = tool.resolution
+    bpy.context.scene.render.resolution_x = tool.resolution
+    if bpy.ops.view3d.camera_to_view.poll():
+        bpy.ops.view3d.camera_to_view()  
+    bpy.context.scene.render.filepath = os.path.join("/tmp", ob.name) 
+    file = os.path.join("/tmp", ob.name)+".png"
+    #Render File, Mark Asset and Set Image
+    bpy.ops.render.render(write_still = True)
+    ob.asset_mark()
+    override = bpy.context.copy()
+    context.area.type = 'FILE_BROWSER'
+    override['id'] = ob
+    bpy.ops.ed.lib_id_load_custom_preview(override,filepath=file)
+    # Unhide the objects hidden for the render
+    for o in tempHidden:
+        o.hide_render = False
+    #Cleanup
+    context.area.type = areatype
+    os.unlink(file)
+    bpy.context.scene.render.resolution_y = hold_y
+    bpy.context.scene.render.resolution_x = hold_x
+    camera.location = camerapos
+    camera.rotation_euler = camerarot
+    bpy.context.scene.render.filepath = filepath
+    bpy.ops.view3d.view_camera()
+
+
+class OT_AssetSnapshotCollection(Operator):
+    """Create a preview of a collection"""
+    bl_idname = "view3d.asset_snaphot_collection"
+    bl_label = "Asset Snapshot - Collection"
+    bl_options = {'REGISTER', 'UNDO'}
+    @classmethod
+    def poll(cls, context):
+        if context.area.type != 'VIEW_3D':
+            return False
+        if context.collection == None:
+            return False
+        return True
+    def execute(self, context):
+        snapshot(self, context,context.collection)
+        return {'FINISHED'}
+
+
+class OT_AssetSnapshotObject(Operator):
+    """Create an asset preview of an object"""
+    bl_idname = "view3d.object_preview"
+    bl_label = "Asset Snapshot - Object"
+    bl_options = {'REGISTER', 'UNDO'}
+    @classmethod
+    def poll(cls, context):
+        if context.area.type != 'VIEW_3D':
+            return False
+        if context.view_layer.objects.active == None:
+            return False
+        return True
+    def execute(self, context):
+        snapshot(self, context, bpy.context.view_layer.objects.active)
+        return {'FINISHED'}
+
+
 class OT_AssetDownloaderOperator(Operator):
     bl_label = "Run script"
     bl_idname = "alt.assetdownloader"
@@ -1027,7 +1122,22 @@ class OBJECT_PT_panel(Panel):
             utilBox.prop(tool, "dispNewScale")
             utilBox.operator("alt.changealldispscale")
             utilBox.operator("alt.userealdispall")
-            
+        
+        
+        #Asset snapshot UI
+        snapshotBox = layout.box()
+        snapshotRow = snapshotBox.row()
+        snapshotRow.prop(obj, "snapshotRow_expanded",
+            icon="TRIA_DOWN" if obj.snapshotRow_expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False
+        )
+        snapshotRow.label(text="Asset snapshot")
+        if obj.snapshotRow_expanded:
+            layout.label(text='Sometimes crashes. SAVE YOUR FILES', icon="ERROR")
+            layout.prop(tool, "resolution")
+            layout.operator("view3d.object_preview")
+            layout.operator("view3d.asset_snaphot_collection")
+        
         
         # Asset downloader UI
         assetDownloaderBox = layout.box()
@@ -1082,6 +1192,8 @@ classes = (
     OT_SimpleDelDupeMaterials,
     OT_UseDisplacementOnAll,
     OT_ChangeAllDisplacementScale,
+    OT_AssetSnapshotCollection,
+    OT_AssetSnapshotObject,
     OT_AssetDownloaderOperator,
     OT_ImportSBSAR,
     OBJECT_PT_panel
