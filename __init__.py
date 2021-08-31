@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "AssetLibraryTools is a free addon which aims to speed up the process of creating asset libraries with the asset browser, This addon is currently very much experimental as is the asset browser in blender.",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 1, 6),
+    "version": (0, 1, 7),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
@@ -369,6 +369,13 @@ class properties(PropertyGroup):
                ]
         )
     
+    dispNewScale: FloatProperty(
+        name = "New Displacement Scale",
+        description = "A float property",
+        default = 0.1,
+        min = 0.0001
+        )
+    
     
     # CC0AssetDownloader properties
     downloader_save_path : StringProperty(
@@ -674,7 +681,7 @@ class OT_BatchDelete(Operator):
             for mesh in bpy.data.meshes:
                 bpy.data.meshes.remove(mesh)
                 i += 1
-        DisplayMessageBox("Done, {0} {1} deleted.".format(i, tool.deleteType))
+        DisplayMessageBox("Done, {0} {1} deleted".format(i, tool.deleteType))
         return {'FINISHED'}
 
 
@@ -685,6 +692,22 @@ class OT_UseDisplacementOnAll(Operator):
         for mat in bpy.data.materials:
             mat.cycles.displacement_method = 'BOTH'
         DisplayMessageBox("Done")
+        return {'FINISHED'}
+
+
+class OT_ChangeAllDisplacementScale(Operator):
+    bl_label = "Change displacement scale on all materials"
+    bl_idname = "alt.changealldispscale"
+    def execute(self, context):
+        tool = context.scene.assetlibrarytools
+        i = 0 # number of nodes changed
+        for mat in bpy.data.materials:
+            if mat is not None and mat.use_nodes and mat.node_tree is not None:
+                for node in mat.node_tree.nodes:
+                    if node.type == 'DISPLACEMENT':
+                        node.inputs[2].default_value = tool.dispNewScale
+                        i += 1
+        DisplayMessageBox("Done, {0} nodes changed".format(i,))
         return {'FINISHED'}
 
 
@@ -714,7 +737,7 @@ class OT_ImportSBSAR(Operator):
         scene = context.scene
         tool = scene.assetlibrarytools
         p = pathlib.Path(str(tool.sbsar_import_path))
-        i = 0
+        i = 0 # number of files imported
         files = [x for x in p.glob('**/*.sbsar') if x.is_file()] # Get filepaths of files with the extension .sbsar in the selected directory (and subdirs, recursively)
         for f in files:
             try:
@@ -846,6 +869,9 @@ class OBJECT_PT_panel(Panel):
             utilBox.prop(tool, "deleteType")
             utilBox.operator("alt.batchdelete")
             utilBox.separator()
+            utilBox.prop(tool, "dispNewScale")
+            utilBox.operator("alt.changealldispscale")
+            utilBox.separator()
             utilBox.operator("alt.userealdispall")
             
         
@@ -897,6 +923,7 @@ classes = (
     OT_ManageAssets,
     OT_BatchDelete,
     OT_UseDisplacementOnAll,
+    OT_ChangeAllDisplacementScale,
     OT_AssetDownloaderOperator,
     OT_ImportSBSAR,
     OBJECT_PT_panel
