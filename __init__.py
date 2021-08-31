@@ -225,6 +225,17 @@ class shaderSetup():
         
         return mat
 
+def listDownloadAttribs(scene, context):
+    scene = context.scene
+    tool = scene.assetlibrarytools
+    if tool.showAllDownloadAttribs == True:
+        attribs = ['None', '1K-JPG', '1K-PNG', '2K-JPG', '2K-PNG', '4K-JPG', '4K-PNG', '8K-JPG', '8K-PNG', '12K-HDR', '16K-HDR', '1K-HDR', '2K-HDR', '4K-HDR', '8K-HDR', '12K-TONEMAPPED', '16K-TONEMAPPED', '1K-TONEMAPPED', '2K-TONEMAPPED', '4K-TONEMAPPED', '8K-TONEMAPPED', '12K-JPG', '12K-PNG', '16K-JPG', '16K-PNG', '1K-HQ-JPG', '1K-HQ-PNG', '1K-LQ-JPG', '1K-LQ-PNG', '1K-SQ-JPG', '1K-SQ-PNG', '2K-HQ-JPG', '2K-HQ-PNG', '2K-LQ-JPG', '2K-LQ-PNG', '2K-SQ-JPG', '2K-SQ-PNG', '4K-HQ-JPG', '4K-HQ-PNG', '4K-LQ-JPG', '4K-LQ-PNG', '4K-SQ-JPG', '4K-SQ-PNG', 'HQ', 'LQ', 'SQ', '24K-JPG', '24K-PNG', '32K-JPG', '32K-PNG', '6K-JPG', '6K-PNG', '2K', '4K', '8K', '1K', 'CustomImages', '16K', '9K', '1000K', '250K', '25K', '5K-JPG', '5K-PNG', '2kPNG', '4kPNG', '2kPNG-PNG', '4kPNG-PNG', '9K-JPG', '10K-JPG', '7K-JPG', '7K-PNG', '3K-JPG', '3K-PNG', '9K-PNG', '33K-JPG', '33K-PNG', '15K-JPG', '15K-PNG']
+    else:
+        attribs = ['None', '1K-JPG', '1K-PNG', '2K-JPG', '2K-PNG', '4K-JPG', '4K-PNG', '8K-JPG', '8K-PNG']
+    items = []
+    for a in attribs:
+        items.append((a, a, ""))
+    return items
 
 # ------------------------------------------------------------------------
 #    Properties
@@ -423,19 +434,15 @@ class properties(PropertyGroup):
         default = "",
         maxlen = 1024,
         )
+    showAllDownloadAttribs: BoolProperty(
+        name = "Show all download attributes",
+        description = "",
+        default = True
+        )
     attributeFilter : EnumProperty(
         name="Attribute filter",
         description="Choose attribute to filter assets by",
-        items=[ ('None', "None", ""),
-                ('1K-JPG', "1K-JPG", ""),
-                ('2K-JPG', "2K-JPG", ""),
-                ('4K-JPG', "4K-JPG", ""),
-                ('8K-JPG', "8K-JPG", ""),
-                ('1K-PNG', "1K-PNG", ""),
-                ('2K-PNG', "2K-PNG", ""),
-                ('4K-PNG', "4K-PNG", ""),
-                ('8K-PNG', "8K-PNG", ""),
-               ]
+        items=listDownloadAttribs
         )
     extensionFilter : EnumProperty(
         name="Extension filter",
@@ -445,13 +452,6 @@ class properties(PropertyGroup):
                 ('obj', "OBJ", ""),
                 ('exr', "EXR", ""),
                 ('sbsar', "SBSAR", ""),
-               ]
-        )
-    terminal : EnumProperty(
-        name="Terminal",
-        description="Choose terminal to run script with",
-        items=[ ('cmd', "cmd", ""),
-                ('gnome-terminal', "gnome-terminal", ""),
                ]
         )
     unZip : BoolProperty(
@@ -468,6 +468,13 @@ class properties(PropertyGroup):
         name = "Dont download files which already exist",
         description = "",
         default = True
+        )
+    terminal : EnumProperty(
+        name="Terminal",
+        description="Choose terminal to run script with",
+        items=[ ('cmd', "cmd", ""),
+                ('gnome-terminal', "gnome-terminal", ""),
+               ]
         )
     
     
@@ -988,6 +995,7 @@ class OBJECT_PT_panel(Panel):
             assetDownloaderBox.prop(tool, "downloader_save_path")
             assetDownloaderBox.label(text='Make sure to uncheck "Relative Path"!', icon="ERROR")
             assetDownloaderBox.prop(tool, "keywordFilter")
+            assetDownloaderBox.prop(tool, "showAllDownloadAttribs")
             assetDownloaderBox.prop(tool, "attributeFilter")
             assetDownloaderBox.prop(tool, "extensionFilter")
             assetDownloaderBox.prop(tool, "unZip")
