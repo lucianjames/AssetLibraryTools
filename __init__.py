@@ -984,6 +984,7 @@ class OBJECT_PT_panel(Panel):
         assetDownloaderRow.label(text="Batch asset downloader [EXPERIMENTAL]")
         if obj.assetDownloaderRow_expanded:
             assetDownloaderRow = assetDownloaderBox.row()
+            assetDownloaderBox.label(text='Downloads files from ambientcg.com')
             assetDownloaderBox.prop(tool, "downloader_save_path")
             assetDownloaderBox.label(text='Make sure to uncheck "Relative Path"!', icon="ERROR")
             assetDownloaderBox.prop(tool, "keywordFilter")
