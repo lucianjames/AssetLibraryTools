@@ -39,13 +39,15 @@ sssNames = ["sss", "subsurface"]
 metNames = ["metallic", "metalness", "metal", "mtl", "met"]
 specNames = ["specularity", "specular", "spec", "spc"]
 roughNames = ["roughness", "rough", "rgh", "gloss", "glossy", "glossiness"]
-normNames = ["normal", "nor", "nrm", "nrml norm"]
+normNames = ["normal", "nor", "nrm", "nrml", "norm"]
 dispNames = ["displacement", "displace", "disp", "dsp", "height", "heightmap", "bump", "bmp"]
 alphaNames = ["alpha", "opacity"]
 emissiveNames = ["emissive", "emission"]
 
+
 # Find the type of PBR texture a file is based on its name
 def FindPBRTextureType(fname):
+    PBRTT = None
     # Split filename into components
     # 'WallTexture_diff_2k.002.jpg' -> ['Wall', 'Texture', 'diff', 'k']
     # Remove digits
@@ -58,9 +60,6 @@ def FindPBRTextureType(fname):
         fname = fname.replace(sep, ' ')
     components = fname.split(' ')
     components = [c.lower() for c in components]
-    
-    # This is probably not the best way to do this lol
-    PBRTT = None
     for i in components:
         if i in diffNames:
             PBRTT = "diff"
@@ -80,13 +79,45 @@ def FindPBRTextureType(fname):
             PBRTT = "alpha"
         if i in emissiveNames:
             PBRTT = "emission"
+    # If the texture type cant be determined using that method, try a different one.
+    # (this method is more likely to be weird and fuck up, but can recognise some filenames the 1st one cant)
+    if PBRTT == None:
+        for n in diffNames:
+            if n in fname:
+                PBRTT = "diff"
+        for n in sssNames:
+            if n in fname:
+                PBRTT = "sss"
+        for n in metNames:
+            if n in fname:
+                PBRTT = "met"
+        for n in specNames:
+            if n in fname:
+                PBRTT = "spec"
+        for n in roughNames:
+            if n in fname:
+                PBRTT = "rough"
+        for n in normNames:
+            if n in fname:
+                PBRTT = "norm"
+        for n in dispNames:
+            if n in fname:
+                PBRTT = "disp"
+        for n in alphaNames:
+            if n in fname:
+                PBRTT = "alpha"
+        for n in emissiveNames:
+            if n in fname:
+                PBRTT = "emission"
     return PBRTT
+
 
 # Display a message in the blender UI
 def DisplayMessageBox(message = "", title = "Info", icon = 'INFO'):
     def draw(self, context):
         self.layout.label(text=message)
     bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
+
 
 # Class with functions for setting up shaders
 class shaderSetup():
@@ -225,6 +256,7 @@ class shaderSetup():
         
         return mat
 
+
 def listDownloadAttribs(scene, context):
     scene = context.scene
     tool = scene.assetlibrarytools
@@ -236,6 +268,7 @@ def listDownloadAttribs(scene, context):
     for a in attribs:
         items.append((a, a, ""))
     return items
+
 
 # ------------------------------------------------------------------------
 #    Properties
