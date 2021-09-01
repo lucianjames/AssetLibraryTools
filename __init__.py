@@ -910,13 +910,6 @@ class OT_AssetSnapshotCollection(Operator):
     bl_idname = "view3d.asset_snaphot_collection"
     bl_label = "Asset Snapshot - Collection"
     bl_options = {'REGISTER', 'UNDO'}
-    @classmethod
-    def poll(cls, context):
-        if context.area.type != 'VIEW_3D':
-            return False
-        if context.collection == None:
-            return False
-        return True
     def execute(self, context):
         snapshot(self, context,context.collection)
         return {'FINISHED'}
@@ -927,13 +920,6 @@ class OT_AssetSnapshotObject(Operator):
     bl_idname = "view3d.object_preview"
     bl_label = "Asset Snapshot - Object"
     bl_options = {'REGISTER', 'UNDO'}
-    @classmethod
-    def poll(cls, context):
-        if context.area.type != 'VIEW_3D':
-            return False
-        if context.view_layer.objects.active == None:
-            return False
-        return True
     def execute(self, context):
         snapshot(self, context, bpy.context.view_layer.objects.active)
         return {'FINISHED'}
