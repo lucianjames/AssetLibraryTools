@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "AssetLibraryTools is a free addon which aims to speed up the process of creating asset libraries with the asset browser, This addon is currently very much experimental as is the asset browser in blender.",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 1, 7),
+    "version": (0, 1, 8),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
@@ -45,12 +45,12 @@ dispNames = ["displacement", "displace", "disp", "dsp", "height", "heightmap", "
 alphaNames = ["alpha", "opacity"]
 emissiveNames = ["emissive", "emission"]
 
+nameLists = [diffNames, sssNames, metNames, specNames, roughNames, normNames, dispNames, alphaNames, emissiveNames]
+texTypes = ["diff", "sss", "met", "spec", "rough", "norm", "disp", "alpha", "emission"]
 
 # Find the type of PBR texture a file is based on its name
 def FindPBRTextureType(fname):
     PBRTT = None
-    # Split filename into components
-    # 'WallTexture_diff_2k.002.jpg' -> ['Wall', 'Texture', 'diff', 'k']
     # Remove digits
     fname = ''.join(i for i in fname if not i.isdigit())
     # Separate CamelCase by space
@@ -59,57 +59,15 @@ def FindPBRTextureType(fname):
     seperators = ['_', '.', '-', '__', '--', '#']
     for sep in seperators:
         fname = fname.replace(sep, ' ')
-    components = fname.split(' ')
-    components = [c.lower() for c in components]
-    for i in components:
-        if i in diffNames:
-            PBRTT = "diff"
-        if i in sssNames:
-            PBRTT = "sss"
-        if i in metNames:
-            PBRTT = "met"
-        if i in specNames:
-            PBRTT = "spec"
-        if i in roughNames:
-            PBRTT = "rough"
-        if i in normNames:
-            PBRTT = "norm"
-        if i in dispNames:
-            PBRTT = "disp"
-        if i in alphaNames:
-            PBRTT = "alpha"
-        if i in emissiveNames:
-            PBRTT = "emission"
-    # If the texture type cant be determined using that method, try a different one.
-    # (this method is more likely to be weird and fuck up, but can recognise some filenames the 1st one cant)
-    if PBRTT == None:
-        for n in diffNames:
-            if n in fname:
-                PBRTT = "diff"
-        for n in sssNames:
-            if n in fname:
-                PBRTT = "sss"
-        for n in metNames:
-            if n in fname:
-                PBRTT = "met"
-        for n in specNames:
-            if n in fname:
-                PBRTT = "spec"
-        for n in roughNames:
-            if n in fname:
-                PBRTT = "rough"
-        for n in normNames:
-            if n in fname:
-                PBRTT = "norm"
-        for n in dispNames:
-            if n in fname:
-                PBRTT = "disp"
-        for n in alphaNames:
-            if n in fname:
-                PBRTT = "alpha"
-        for n in emissiveNames:
-            if n in fname:
-                PBRTT = "emission"
+    # Set entire string to lower case
+    fname = fname.lower()
+    # Find PBRTT
+    i = 0
+    for nameList in nameLists:
+        for name in nameList:
+            if name in fname:
+                PBRTT = texTypes[i]
+        i+=1
     return PBRTT
 
 
