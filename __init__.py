@@ -611,40 +611,59 @@ class OT_ImportModels(Operator):
         scene = context.scene
         tool = scene.assetlibrarytools
         p = pathlib.Path(str(tool.model_import_path))
-        i = 0 # Number of imported objects
+        imported = 0 # Number of imported objects
+        errors = 0 # Number of import errors
         # Import FBX files
         if tool.import_fbx == True:
             fbxFilePaths = [x for x in p.glob('**/*.fbx') if x.is_file()] # Get filepaths of files with the extension .fbx in the selected directory (and subdirs, recursively)
             for filePath in fbxFilePaths:
                 old_objects = set(context.scene.objects)
-                bpy.ops.import_scene.fbx(filepath=str(filePath))
-                OT_ImportModels.hideNewObjects(old_objects)
-                i += 1
+                try:
+                    bpy.ops.import_scene.fbx(filepath=str(filePath))
+                    imported += 1
+                except:
+                    print("FBX import error")
+                    errors += 1
         # Import GLTF files
         if tool.import_gltf == True:
             gltfFilePaths = [x for x in p.glob('**/*.gltf') if x.is_file()] # Get filepaths of files with the extension .gltf in the selected directory (and subdirs, recursively)
             for filePath in gltfFilePaths:
                 old_objects = set(context.scene.objects)
-                bpy.ops.import_scene.gltf(filepath=str(filePath))
+                try:
+                    bpy.ops.import_scene.gltf(filepath=str(filePath))
+                    imported += 1
+                except:
+                    print("GLTF import error")
+                    errors += 1
                 OT_ImportModels.hideNewObjects(old_objects)
-                i += 1
         # Import OBJ files
         if tool.import_obj == True:
             objFilePaths = [x for x in p.glob('**/*.obj') if x.is_file()] # Get filepaths of files with the extension .obj in the selected directory (and subdirs, recursively)
             for filePath in objFilePaths:
                 old_objects = set(context.scene.objects)
-                bpy.ops.import_scene.obj(filepath=str(filePath))
+                try:
+                    bpy.ops.import_scene.obj(filepath=str(filePath))
+                    imported += 1
+                except:
+                    print("OBJ import error")
+                    errors += 1
                 OT_ImportModels.hideNewObjects(old_objects)
-                i += 1
         # Import X3D files
         if tool.import_x3d == True:
             x3dFilePaths = [x for x in p.glob('**/*.x3d') if x.is_file()] # Get filepaths of files with the extension .x3d in the selected directory (and subdirs, recursively)
             for filePath in x3dFilePaths:
                 old_objects = set(context.scene.objects)
-                bpy.ops.import_scene.x3d(filepath=str(filePath))
+                try:
+                    bpy.ops.import_scene.x3d(filepath=str(filePath))
+                    imported += 1
+                except:
+                    print("X3D import error")
+                    errors += 1
                 OT_ImportModels.hideNewObjects(old_objects)
-                i += 1
-        DisplayMessageBox("Complete, {0} models imported".format(i))
+        if errors == 0:
+            DisplayMessageBox("Complete, {0} models imported".format(imported))
+        else:
+            DisplayMessageBox("Complete, {0} models imported. {1} import errors".format(imported, errors))
         return{'FINISHED'}
 
 
