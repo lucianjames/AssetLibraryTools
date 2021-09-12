@@ -360,6 +360,16 @@ class properties(PropertyGroup):
                 ('materials', "Materials", ""),
                 ]
         )
+    deleteLights : BoolProperty(
+        name = "Dont append lights",
+        description = "",
+        default = True
+        )
+    deleteCameras : BoolProperty(
+        name = "Dont append cameras",
+        description = "",
+        default = True
+        )
     
     
     # Asset management properties
@@ -379,16 +389,6 @@ class properties(PropertyGroup):
                 ('textures', "Textures", ""),
                 ('meshes', "Meshes", ""),
                ]
-        )
-    deleteLights : BoolProperty(
-        name = "Dont append lights",
-        description = "",
-        default = True
-        )
-    deleteCameras : BoolProperty(
-        name = "Dont append cameras",
-        description = "",
-        default = True
         )
     
     
