@@ -823,6 +823,7 @@ class OT_CleanupUnusedMaterials(Operator):
         DisplayMessageBox("Done, {0} unused materials deleted".format(i))
         return {'FINISHED'}
 
+
 class OT_UseDisplacementOnAll(Operator):
     bl_label = "Use real displacement on all materials"
     bl_idname = "alt.userealdispall"
