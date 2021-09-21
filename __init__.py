@@ -811,6 +811,18 @@ class OT_SimpleDelDupeMaterials(Operator):
         return {'FINISHED'}
 
 
+class OT_CleanupUnusedMaterials(Operator):
+    bl_label = "Clean up unused materials"
+    bl_idname = "alt.cleanupunusedmats"
+    def execute(self, context):
+        i = 0
+        for mat in bpy.data.materials:
+            if mat.users == 0:
+                bpy.data.materials.remove(mat)
+                i += 1
+        DisplayMessageBox("Done, {0} unused materials deleted".format(i))
+        return {'FINISHED'}
+
 class OT_UseDisplacementOnAll(Operator):
     bl_label = "Use real displacement on all materials"
     bl_idname = "alt.userealdispall"
@@ -833,7 +845,7 @@ class OT_ChangeAllDisplacementScale(Operator):
                     if node.type == 'DISPLACEMENT':
                         node.inputs[2].default_value = tool.dispNewScale
                         i += 1
-        DisplayMessageBox("Done, {0} nodes changed".format(i,))
+        DisplayMessageBox("Done, {0} nodes changed".format(i))
         return {'FINISHED'}
 
 
@@ -1102,6 +1114,7 @@ class OBJECT_PT_panel(Panel):
             utilBox.separator()
             utilBox.label(text='Deletes based on material name, not material contents', icon="ERROR")
             utilBox.operator("alt.simpledeldupemats")
+            utilBox.operator("alt.cleanupunusedmats")
             utilBox.separator()
             utilBox.prop(tool, "dispNewScale")
             utilBox.operator("alt.changealldispscale")
@@ -1174,6 +1187,7 @@ classes = (
     OT_ManageAssets,
     OT_BatchDelete,
     OT_SimpleDelDupeMaterials,
+    OT_CleanupUnusedMaterials,
     OT_UseDisplacementOnAll,
     OT_ChangeAllDisplacementScale,
     OT_AssetSnapshotCollection,
