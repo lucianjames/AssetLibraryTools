@@ -25,6 +25,7 @@ AssetLibraryTools is a free addon which aims to speed up the process of creating
 * Enable real displacement for cycles on all materials at once
 * Change displacement scale on all materials at once
 * Clean up duplicate materials (based on name)
+* Clean up unused materials
 * And more to come
 
 ![image](https://user-images.githubusercontent.com/65134690/131561256-c1c6f9ba-fc2e-4940-8e32-478bb7d12feb.png)
