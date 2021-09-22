@@ -478,6 +478,7 @@ class properties(PropertyGroup):
         items=[ ('cmd', "cmd", ""),
                 ('gnome-terminal', "gnome-terminal", ""),
                 ('konsole', 'konsole', ""),
+                ('xterm', 'xterm', ""),
                ]
         )
     
@@ -949,6 +950,8 @@ class OT_AssetDownloaderOperator(Operator):
             tool.keywordFilter = 'None'
         if ' ' not in tool.downloader_save_path and tool.downloader_save_path != '':
             # Start ALT_CC0AssetDownloader.py via chosen terminal
+            if tool.terminal == 'xterm':
+                os.system('xterm -e "python3 {0}/ALT_CC0AssetDownloader.py {1} {2} {3} {4} {5} {6} {7}"'.format(ur+'/addons/AssetLibraryTools', tool.downloader_save_path, tool.keywordFilter, tool.attributeFilter, tool.extensionFilter, str(tool.unZip), str(tool.deleteZips), str(tool.skipDuplicates)))
             if tool.terminal == 'konsole':
                 os.system('konsole -e "python3 {0}/ALT_CC0AssetDownloader.py {1} {2} {3} {4} {5} {6} {7}"'.format(ur+'/addons/AssetLibraryTools', tool.downloader_save_path, tool.keywordFilter, tool.attributeFilter, tool.extensionFilter, str(tool.unZip), str(tool.deleteZips), str(tool.skipDuplicates)))
             if tool.terminal == 'gnome-terminal':
