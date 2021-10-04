@@ -142,76 +142,76 @@ class shaderSetup():
         node_mapping = shaderSetup.createNode(mat, "ShaderNodeMapping", "node_mapping", (-1300,0))
         node_texCoord = shaderSetup.createNode(mat, "ShaderNodeTexCoord", "node_texCoord", (-1500,0))
         # Link base nodes
-        links.new(node_principled.outputs[0], node_output.inputs[0])
-        links.new(node_texCoord.outputs[2], node_mapping.inputs[0])
+        links.new(node_principled.outputs['BSDF'], node_output.inputs['Surface'])
+        links.new(node_texCoord.outputs['UV'], node_mapping.inputs['Vector'])
         
         # Create, fill, and link texture nodes
         imported_tex_nodes = 0
         if diffuseTexture != None and tool.import_diff != False:
             node_imTexDiffuse = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexDiffuse", (-800,300-(300*imported_tex_nodes)))
             node_imTexDiffuse.image = diffuseTexture
-            links.new(node_imTexDiffuse.outputs[0], node_principled.inputs[0])
-            links.new(node_mapping.outputs[0], node_imTexDiffuse.inputs[0])
+            links.new(node_imTexDiffuse.outputs['Color'], node_principled.inputs['Base Color'])
+            links.new(node_mapping.outputs['Vector'], node_imTexDiffuse.inputs['Vector'])
             imported_tex_nodes += 1
             
         if sssTexture != None and tool.import_sss != False:
             node_imTexSSS = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexSSS", (-800,300-(300*imported_tex_nodes)))
             node_imTexSSS.image = sssTexture
-            links.new(node_imTexSSS.outputs[0], node_principled.inputs[1])
-            links.new(node_mapping.outputs[0], node_imTexSSS.inputs[0])
+            links.new(node_imTexSSS.outputs['Color'], node_principled.inputs['Subsurface'])
+            links.new(node_mapping.outputs['Vector'], node_imTexSSS.inputs['Vector'])
             imported_tex_nodes += 1
             
         if metallicTexture != None and tool.import_met != False:
             node_imTexMetallic = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexMetallic", (-800,300-(300*imported_tex_nodes)))
             node_imTexMetallic.image = metallicTexture
-            links.new(node_imTexMetallic.outputs[0], node_principled.inputs[4])
-            links.new(node_mapping.outputs[0], node_imTexMetallic.inputs[0])
+            links.new(node_imTexMetallic.outputs['Color'], node_principled.inputs['Metallic'])
+            links.new(node_mapping.outputs['Vector'], node_imTexMetallic.inputs['Vector'])
             imported_tex_nodes += 1
             
         if specularTexture != None and tool.import_spec != False:
             node_imTexSpecular = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexSpecular", (-800,300-(300*imported_tex_nodes)))
             node_imTexSpecular.image = specularTexture
-            links.new(node_imTexSpecular.outputs[0], node_principled.inputs[5])
-            links.new(node_mapping.outputs[0], node_imTexSpecular.inputs[0])
+            links.new(node_imTexSpecular.outputs['Color'], node_principled.inputs['Specular'])
+            links.new(node_mapping.outputs['Vector'], node_imTexSpecular.inputs['Vector'])
             imported_tex_nodes += 1
             
         if roughnessTexture != None and tool.import_rough != False:
             node_imTexRoughness = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexRoughness", (-800,300-(300*imported_tex_nodes)))
             node_imTexRoughness.image = roughnessTexture
-            links.new(node_imTexRoughness.outputs[0], node_principled.inputs[7])
-            links.new(node_mapping.outputs[0], node_imTexRoughness.inputs[0])
+            links.new(node_imTexRoughness.outputs['Color'], node_principled.inputs['Roughness'])
+            links.new(node_mapping.outputs['Vector'], node_imTexRoughness.inputs['Vector'])
             imported_tex_nodes += 1
             
         if emissionTexture != None and tool.import_emission != False:
             node_imTexEmission = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexEmission", (-800,300-(300*imported_tex_nodes)))
             node_imTexEmission.image = emissionTexture
-            links.new(node_imTexEmission.outputs[0], node_principled.inputs[17])
-            links.new(node_mapping.outputs[0], node_imTexEmission.inputs[0])
+            links.new(node_imTexEmission.outputs['Color'], node_principled.inputs['Emission'])
+            links.new(node_mapping.outputs['Vector'], node_imTexEmission.inputs['Vector'])
             imported_tex_nodes += 1
             
         if alphaTexture != None and tool.import_alpha != False:
             node_imTexAlpha = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexAlpha", (-800,300-(300*imported_tex_nodes)))
             node_imTexAlpha.image = alphaTexture
-            links.new(node_imTexAlpha.outputs[0], node_principled.inputs[19])
-            links.new(node_mapping.outputs[0], node_imTexAlpha.inputs[0])
+            links.new(node_imTexAlpha.outputs['Color'], node_principled.inputs['Alpha'])
+            links.new(node_mapping.outputs['Vector'], node_imTexAlpha.inputs['Vector'])
             imported_tex_nodes += 1
             
         if normalTexture != None and tool.import_norm != False:
             node_imTexNormal = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexNormal", (-800,300-(300*imported_tex_nodes)))
             node_imTexNormal.image = normalTexture
             node_normalMap = shaderSetup.createNode(mat, "ShaderNodeNormalMap", "node_normalMap", (-500,300-(300*imported_tex_nodes)))
-            links.new(node_imTexNormal.outputs[0], node_normalMap.inputs[1])
-            links.new(node_normalMap.outputs[0], node_principled.inputs[20])
-            links.new(node_mapping.outputs[0], node_imTexNormal.inputs[0])
+            links.new(node_imTexNormal.outputs['Color'], node_normalMap.inputs['Color'])
+            links.new(node_normalMap.outputs['Normal'], node_principled.inputs['Normal'])
+            links.new(node_mapping.outputs['Vector'], node_imTexNormal.inputs['Vector'])
             imported_tex_nodes += 1
             
         if displacementTexture != None and tool.import_disp != False:
             node_imTexDisplacement = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexDisplacement", (-800,300-(300*imported_tex_nodes)))
             node_imTexDisplacement.image = displacementTexture
             node_displacement = shaderSetup.createNode(mat, "ShaderNodeDisplacement", "node_displacement", (-200,-600))
-            links.new(node_imTexDisplacement.outputs[0], node_displacement.inputs[0])
-            links.new(node_displacement.outputs[0], node_output.inputs[2])
-            links.new(node_mapping.outputs[0], node_imTexDisplacement.inputs[0])
+            links.new(node_imTexDisplacement.outputs['Color'], node_displacement.inputs['Height'])
+            links.new(node_displacement.outputs['Displacement'], node_output.inputs['Displacement'])
+            links.new(node_mapping.outputs['Vector'], node_imTexDisplacement.inputs['Vector'])
             imported_tex_nodes += 1
         
         return mat
