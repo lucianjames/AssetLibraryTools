@@ -2,7 +2,7 @@ bl_info = {
     "name": "AssetLibraryTools",
     "description": "AssetLibraryTools is a free addon which aims to speed up the process of creating asset libraries with the asset browser, This addon is currently very much experimental as is the asset browser in blender.",
     "author": "Lucian James (LJ3D)",
-    "version": (0, 1, 9),
+    "version": (0, 2, 0),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
     "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
