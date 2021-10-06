@@ -89,6 +89,11 @@ class shaderSetup():
         n.location = location
         return n
     
+    def setMapping(node):
+        if tool.texture_mapping == 'Object':
+                node.projection = 'BOX'
+                node.projection_blend = 1
+    
     def simplePrincipledSetup(name, files):
         tool = bpy.context.scene.assetlibrarytools
         # Create a new empty material
@@ -152,70 +157,56 @@ class shaderSetup():
             node_imTexDiffuse.image = diffuseTexture
             links.new(node_imTexDiffuse.outputs['Color'], node_principled.inputs['Base Color'])
             links.new(node_mapping.outputs['Vector'], node_imTexDiffuse.inputs['Vector'])
+            setMapping(node_imTexDiffuse)
             imported_tex_nodes += 1
-            if tool.texture_mapping == 'Object':
-                node_imTexDiffuse.projection = 'BOX'
-                node_imTexDiffuse.projection_blend = 1
             
         if sssTexture != None and tool.import_sss != False:
             node_imTexSSS = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexSSS", (-800,300-(300*imported_tex_nodes)))
             node_imTexSSS.image = sssTexture
             links.new(node_imTexSSS.outputs['Color'], node_principled.inputs['Subsurface'])
             links.new(node_mapping.outputs['Vector'], node_imTexSSS.inputs['Vector'])
+            setMapping(node_imTexSSS)
             imported_tex_nodes += 1
-            if tool.texture_mapping == 'Object':
-                node_imTexSSS.projection = 'BOX'
-                node_imTexSSS.projection_blend = 1
             
         if metallicTexture != None and tool.import_met != False:
             node_imTexMetallic = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexMetallic", (-800,300-(300*imported_tex_nodes)))
             node_imTexMetallic.image = metallicTexture
             links.new(node_imTexMetallic.outputs['Color'], node_principled.inputs['Metallic'])
             links.new(node_mapping.outputs['Vector'], node_imTexMetallic.inputs['Vector'])
+            setMapping(node_imTexMetallic)
             imported_tex_nodes += 1
-            if tool.texture_mapping == 'Object':
-                node_imTexMetallic.projection = 'BOX'
-                node_imTexMetallic.projection_blend = 1
             
         if specularTexture != None and tool.import_spec != False:
             node_imTexSpecular = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexSpecular", (-800,300-(300*imported_tex_nodes)))
             node_imTexSpecular.image = specularTexture
             links.new(node_imTexSpecular.outputs['Color'], node_principled.inputs['Specular'])
             links.new(node_mapping.outputs['Vector'], node_imTexSpecular.inputs['Vector'])
+            setMapping(node_imTexSpecular)
             imported_tex_nodes += 1
-            if tool.texture_mapping == 'Object':
-                node_imTexSpecular.projection = 'BOX'
-                node_imTexSpecular.projection_blend = 1
             
         if roughnessTexture != None and tool.import_rough != False:
             node_imTexRoughness = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexRoughness", (-800,300-(300*imported_tex_nodes)))
             node_imTexRoughness.image = roughnessTexture
             links.new(node_imTexRoughness.outputs['Color'], node_principled.inputs['Roughness'])
             links.new(node_mapping.outputs['Vector'], node_imTexRoughness.inputs['Vector'])
+            setMapping(node_imTexRoughness)
             imported_tex_nodes += 1
-            if tool.texture_mapping == 'Object':
-                node_imTexRoughness.projection = 'BOX'
-                node_imTexRoughness.projection_blend = 1
             
         if emissionTexture != None and tool.import_emission != False:
             node_imTexEmission = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexEmission", (-800,300-(300*imported_tex_nodes)))
             node_imTexEmission.image = emissionTexture
             links.new(node_imTexEmission.outputs['Color'], node_principled.inputs['Emission'])
             links.new(node_mapping.outputs['Vector'], node_imTexEmission.inputs['Vector'])
+            setMapping(node_imTexEmission)
             imported_tex_nodes += 1
-            if tool.texture_mapping == 'Object':
-                node_imTexRoughness.projection = 'BOX'
-                node_imTexRoughness.projection_blend = 1
             
         if alphaTexture != None and tool.import_alpha != False:
             node_imTexAlpha = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexAlpha", (-800,300-(300*imported_tex_nodes)))
             node_imTexAlpha.image = alphaTexture
             links.new(node_imTexAlpha.outputs['Color'], node_principled.inputs['Alpha'])
             links.new(node_mapping.outputs['Vector'], node_imTexAlpha.inputs['Vector'])
+            setMapping(node_imTexAlpha)
             imported_tex_nodes += 1
-            if tool.texture_mapping == 'Object':
-                node_imTexRoughness.projection = 'BOX'
-                node_imTexRoughness.projection_blend = 1
             
         if normalTexture != None and tool.import_norm != False:
             node_imTexNormal = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexNormal", (-800,300-(300*imported_tex_nodes)))
@@ -224,10 +215,8 @@ class shaderSetup():
             links.new(node_imTexNormal.outputs['Color'], node_normalMap.inputs['Color'])
             links.new(node_normalMap.outputs['Normal'], node_principled.inputs['Normal'])
             links.new(node_mapping.outputs['Vector'], node_imTexNormal.inputs['Vector'])
+            setMapping(node_imTexNormal)
             imported_tex_nodes += 1
-            if tool.texture_mapping == 'Object':
-                node_imTexNormal.projection = 'BOX'
-                node_imTexNormal.projection_blend = 1
             
         if displacementTexture != None and tool.import_disp != False:
             node_imTexDisplacement = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexDisplacement", (-800,300-(300*imported_tex_nodes)))
@@ -236,10 +225,8 @@ class shaderSetup():
             links.new(node_imTexDisplacement.outputs['Color'], node_displacement.inputs['Height'])
             links.new(node_displacement.outputs['Displacement'], node_output.inputs['Displacement'])
             links.new(node_mapping.outputs['Vector'], node_imTexDisplacement.inputs['Vector'])
+            setMapping(node_imTexDisplacement)
             imported_tex_nodes += 1
-            if tool.texture_mapping == 'Object':
-                node_imTexDisplacement.projection = 'BOX'
-                node_imTexDisplacement.projection_blend = 1
         
         return mat
 
