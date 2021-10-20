@@ -424,7 +424,6 @@ class properties(PropertyGroup):
                 ('meshes', "Meshes", ""),
                ]
         )
-    
     dispNewScale: FloatProperty(
         name = "New Displacement Scale",
         description = "A float property",
