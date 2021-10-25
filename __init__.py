@@ -411,6 +411,16 @@ class properties(PropertyGroup):
                 ('meshes', "Meshes", ""),
                ]
         )
+    previewgentype : EnumProperty(
+        name="Asset type",
+        description="Choose a type of asset to mark/unmark",
+        items=[ ('objects', "Objects", ""),
+                ('materials', "Materials", ""),
+                ('images', "Images", ""),
+                ('textures', "Textures", ""),
+                ('meshes', "Meshes", ""),
+               ]
+        )
     
     
     # Utilities panel properties
@@ -788,6 +798,35 @@ class OT_ManageAssets(Operator):
         return {'FINISHED'}
 
 
+class OT_GenerateAssetPreviews(Operator):
+    bl_label = "Generate previews"
+    bl_idname = "alt.generateassetpreviews"
+    def execute(self, context):
+        scene = context.scene
+        tool = scene.assetlibrarytools
+        if tool.previewgentype == 'objects':
+            for obj in bpy.data.objects:
+                if obj.asset_data:
+                    obj.asset_generate_preview()
+        if tool.previewgentype == 'materials':
+            for mat in bpy.data.materials:
+                if mat.asset_data:
+                    mat.asset_generate_preview()
+        if tool.previewgentype == 'images':
+            for img in bpy.data.images:
+                if img.asset_data:
+                    img.asset_generate_preview()
+        if tool.previewgentype == 'textures':
+            for tex in bpy.data.textures:
+                if tex.asset_data:
+                    tex.asset_generate_preview()      
+        if tool.previewgentype == 'meshes':
+            for mesh in bpy.data.meshes:
+                if mesh.asset_data:
+                    mesh.asset_generate_preview()      
+        return {'FINISHED'}
+
+
 class OT_BatchDelete(Operator):
     bl_label = "Go"
     bl_idname = "alt.batchdelete"
@@ -1124,6 +1163,10 @@ class OBJECT_PT_panel(Panel):
             assetBrowserOpsBox.prop(tool, "markunmark")
             assetBrowserOpsBox.prop(tool, "assettype")
             assetBrowserOpsBox.operator("alt.manageassets")
+            assetBrowserOpsBox.label(text="Generate asset previews:")
+            assetBrowserOpsBox.prop(tool, "previewgentype")
+            assetBrowserOpsBox.operator("alt.generateassetpreviews")
+            
         
         
         # Utility operations UI
@@ -1212,6 +1255,7 @@ classes = (
     OT_ImportModels,
     OT_BatchAppend,
     OT_ManageAssets,
+    OT_GenerateAssetPreviews,
     OT_BatchDelete,
     OT_SimpleDelDupeMaterials,
     OT_CleanupUnusedMaterials,
