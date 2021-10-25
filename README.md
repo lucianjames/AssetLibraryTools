@@ -7,6 +7,7 @@ AssetLibraryTools is a free addon which aims to speed up the process of creating
   * Add real displacement to materials upon import
   * Add fake user to materials upon import
   * Skip materials that already exist
+  * Import with UV or object mapping
 * Batch import models of various filetypes (fbx, gltf, obj, x3d)
   * Hide imported models straight after import
 * Batch append objects/materials from multiple .blend files at once
@@ -21,6 +22,7 @@ AssetLibraryTools is a free addon which aims to speed up the process of creating
 * Generate custom collection/object asset browser thumbnails (base code from https://github.com/johnnygizmo/asset_snapshot)
 * Batch import SBSAR files via Adobe substance 3D add-on for blender
 * Batch mark/unmark materials, meshes, objects, images, and textures as assets
+* Batch generate asset previews
 * Batch delete all materials/objects/textures/images/meshes
 * Enable real displacement for cycles on all materials at once
 * Change displacement scale on all materials at once
@@ -28,4 +30,5 @@ AssetLibraryTools is a free addon which aims to speed up the process of creating
 * Clean up unused materials
 * And more to come
 
-![image](https://user-images.githubusercontent.com/65134690/131561256-c1c6f9ba-fc2e-4940-8e32-478bb7d12feb.png)
+![alt](https://user-images.githubusercontent.com/65134690/138753452-d354f9ec-fe30-4a73-b5a4-8f74ee03063a.png)
+
