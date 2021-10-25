@@ -1168,7 +1168,6 @@ class OBJECT_PT_panel(Panel):
             assetBrowserOpsBox.operator("alt.generateassetpreviews")
             
         
-        
         # Utility operations UI
         utilBox = layout.box()
         utilRow = utilBox.row()
