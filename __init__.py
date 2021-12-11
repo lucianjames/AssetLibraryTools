@@ -223,6 +223,7 @@ class shaderSetup():
             node_imTexDisplacement = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexDisplacement", (-800,300-(300*imported_tex_nodes)))
             node_imTexDisplacement.image = displacementTexture
             node_displacement = shaderSetup.createNode(mat, "ShaderNodeDisplacement", "node_displacement", (-200,-600))
+            node_displacement.interpolation = 'Smart'
             links.new(node_imTexDisplacement.outputs['Color'], node_displacement.inputs['Height'])
             links.new(node_displacement.outputs['Displacement'], node_output.inputs['Displacement'])
             links.new(node_mapping.outputs['Vector'], node_imTexDisplacement.inputs['Vector'])
