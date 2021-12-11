@@ -222,8 +222,8 @@ class shaderSetup():
         if displacementTexture != None and tool.import_disp != False:
             node_imTexDisplacement = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexDisplacement", (-800,300-(300*imported_tex_nodes)))
             node_imTexDisplacement.image = displacementTexture
+            node_imTexDisplacement.interpolation = 'Smart'
             node_displacement = shaderSetup.createNode(mat, "ShaderNodeDisplacement", "node_displacement", (-200,-600))
-            node_displacement.interpolation = 'Smart'
             links.new(node_imTexDisplacement.outputs['Color'], node_displacement.inputs['Height'])
             links.new(node_displacement.outputs['Displacement'], node_output.inputs['Displacement'])
             links.new(node_mapping.outputs['Vector'], node_imTexDisplacement.inputs['Vector'])
@@ -264,6 +264,12 @@ class properties(PropertyGroup):
         name = "Skip existing",
         description = "Dont import materials if a material with the same name already exists",
         default = True
+        )
+    tex_ignore_filter : StringProperty(
+        name = "Tex name filter",
+        description = "Filter unwanted textures by a common string in the name (such as DX, which denotes a directX normal map)",
+        default = "",
+        maxlen = 1024,
         )
     use_fake_user : BoolProperty(
         name = "Use fake user",
@@ -592,6 +598,10 @@ class OT_BatchImportPBR(Operator):
         subdirectories = [x for x in pathlib.Path(tool.mat_import_path).iterdir() if x.is_dir()] # Get subdirs in directory selected in UI
         for sd in subdirectories:
             filePaths = [x for x in pathlib.Path(sd).iterdir() if x.is_file()] # Get filepaths of textures
+            if tool.tex_ignore_filter != "": # Remove filepaths of textures which contain a filtered string, if a filter is chosen.
+                for fp in filePaths:
+                    if tool.tex_ignore_filter in fp.name:
+                        filePaths.pop(filePaths.index(fp))
             # Get existing material names if skipping existing materials is turned on
             if tool.skip_existing == True:
                 existing_mat_names = []
@@ -1083,6 +1093,7 @@ class OBJECT_PT_panel(Panel):
                 matImportOptionsRow = matImportBox.row()
                 matImportBox.label(text="Import settings:")
                 matImportBox.prop(tool, "skip_existing")
+                matImportBox.prop(tool, "tex_ignore_filter")
                 matImportBox.separator()
                 matImportBox.label(text="Material settings:")
                 matImportBox.prop(tool, "use_fake_user")
