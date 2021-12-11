@@ -145,11 +145,14 @@ class shaderSetup():
         # Create base nodes
         node_output = shaderSetup.createNode(mat, "ShaderNodeOutputMaterial", "node_output", (250,0))
         node_principled = shaderSetup.createNode(mat, "ShaderNodeBsdfPrincipled", "node_principled", (-300,0))
+        links.new(node_principled.outputs['BSDF'], node_output.inputs['Surface'])
         node_mapping = shaderSetup.createNode(mat, "ShaderNodeMapping", "node_mapping", (-1300,0))
         node_texCoord = shaderSetup.createNode(mat, "ShaderNodeTexCoord", "node_texCoord", (-1500,0))
-        # Link base nodes
-        links.new(node_principled.outputs['BSDF'], node_output.inputs['Surface'])
         links.new(node_texCoord.outputs[tool.texture_mapping], node_mapping.inputs['Vector'])
+        if tool.add_extranodes:
+            node_scaleValue = shaderSetup.createNode(mat, "ShaderNodeValue", "node_scaleValue", (-1500, -300))
+            node_scaleValue.outputs['Value'].default_value = 1
+            links.new(node_scaleValue.outputs['Value'], node_mapping.inputs['Scale'])
         
         # Create, fill, and link texture nodes
         imported_tex_nodes = 0
