@@ -5,7 +5,7 @@ bl_info = {
     "version": (0, 2, 1),
     "blender": (3, 0, 0),
     "location": "3D View > Tools",
-    "warning": "Developed in 3.0 ALPHA. May be unstable or broken in future versions", # used for warning icon and text in addons panel
+    "warning": "Developed in 3.0, primarily the alpha. May be unstable or broken in future versions", # used for warning icon and text in addons panel
     "wiki_url": "https://github.com/LJ3D/AssetLibraryTools/wiki",
     "tracker_url": "https://github.com/LJ3D/AssetLibraryTools",
     "category": "3D View"
@@ -145,11 +145,14 @@ class shaderSetup():
         # Create base nodes
         node_output = shaderSetup.createNode(mat, "ShaderNodeOutputMaterial", "node_output", (250,0))
         node_principled = shaderSetup.createNode(mat, "ShaderNodeBsdfPrincipled", "node_principled", (-300,0))
+        links.new(node_principled.outputs['BSDF'], node_output.inputs['Surface'])
         node_mapping = shaderSetup.createNode(mat, "ShaderNodeMapping", "node_mapping", (-1300,0))
         node_texCoord = shaderSetup.createNode(mat, "ShaderNodeTexCoord", "node_texCoord", (-1500,0))
-        # Link base nodes
-        links.new(node_principled.outputs['BSDF'], node_output.inputs['Surface'])
         links.new(node_texCoord.outputs[tool.texture_mapping], node_mapping.inputs['Vector'])
+        if tool.add_extranodes:
+            node_scaleValue = shaderSetup.createNode(mat, "ShaderNodeValue", "node_scaleValue", (-1500, -300))
+            node_scaleValue.outputs['Value'].default_value = 1
+            links.new(node_scaleValue.outputs['Value'], node_mapping.inputs['Scale'])
         
         # Create, fill, and link texture nodes
         imported_tex_nodes = 0
@@ -188,7 +191,12 @@ class shaderSetup():
         if roughnessTexture != None and tool.import_rough != False:
             node_imTexRoughness = shaderSetup.createNode(mat, "ShaderNodeTexImage", "node_imTexRoughness", (-800,300-(300*imported_tex_nodes)))
             node_imTexRoughness.image = roughnessTexture
-            links.new(node_imTexRoughness.outputs['Color'], node_principled.inputs['Roughness'])
+            if tool.add_extranodes:
+                node_imTexRoughnessColourRamp = shaderSetup.createNode(mat, "ShaderNodeValToRGB", "node_imTexRoughnessColourRamp", (-550,300-(300*imported_tex_nodes)))
+                links.new(node_imTexRoughness.outputs['Color'], node_imTexRoughnessColourRamp.inputs['Fac'])
+                links.new(node_imTexRoughnessColourRamp.outputs['Color'], node_principled.inputs['Roughness'])
+            else:
+                links.new(node_imTexRoughness.outputs['Color'], node_principled.inputs['Roughness'])
             links.new(node_mapping.outputs['Vector'], node_imTexRoughness.inputs['Vector'])
             shaderSetup.setMapping(node_imTexRoughness)
             imported_tex_nodes += 1
@@ -279,6 +287,11 @@ class properties(PropertyGroup):
     use_real_displacement : BoolProperty(
         name = "Use real displacement",
         description = "Enable real geometry displacement in the material settings (cycles only)",
+        default = False
+        )
+    add_extranodes : BoolProperty(
+        name = "Add utility nodes",
+        description = "Adds nodes to the imported materials for easy control",
         default = False
         )
     texture_mapping : EnumProperty(
@@ -1098,6 +1111,7 @@ class OBJECT_PT_panel(Panel):
                 matImportBox.label(text="Material settings:")
                 matImportBox.prop(tool, "use_fake_user")
                 matImportBox.prop(tool, "use_real_displacement")
+                matImportBox.prop(tool, "add_extranodes")
                 matImportBox.prop(tool, "texture_mapping")
                 matImportBox.separator()
                 matImportBox.label(text="Import following textures into materials (if found):")
