@@ -8,6 +8,8 @@ AssetLibraryTools is a free addon which aims to speed up the process of creating
   * Add fake user to materials upon import
   * Skip materials that already exist
   * Import with UV or object mapping
+  * Add extra utility nodes
+  * Filter textures by string (dont load if contains x)
 * Batch import models of various filetypes (fbx, gltf, obj, x3d)
   * Hide imported models straight after import
 * Batch append objects/materials from multiple .blend files at once
