@@ -364,6 +364,11 @@ class properties(PropertyGroup):
         description = "",
         default = False
         )
+    join_new_objects : BoolProperty(
+        name = "Join all models in each file together after import",
+        description = "",
+        default = False
+        )
     import_fbx : BoolProperty(
         name = "Import FBX files",
         description = "",
@@ -401,6 +406,11 @@ class properties(PropertyGroup):
         )
     append_move_to_new_collection_after_import : BoolProperty(
         name = "Move objects to new collection after import",
+        description = "",
+        default = False
+        )
+    append_join_new_objects : BoolProperty(
+        name = "Join all objects in each file together after import",
         description = "",
         default = False
         )
@@ -685,6 +695,17 @@ class OT_ImportModels(Operator):
                     uc.objects.unlink(obj)
                 newCollection.objects.link(obj)
     
+    def joinAllNewObjects(old_objects):
+        scene = bpy.context.scene
+        tool = scene.assetlibrarytools
+        if tool.join_new_objects == True:
+            imported_objects = set(bpy.context.scene.objects) - old_objects
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj in imported_objects:
+                bpy.context.view_layer.objects.active = obj
+                obj.select_set(True)
+            bpy.ops.object.join()
+    
     def execute(self, context):
         scene = context.scene
         tool = scene.assetlibrarytools
@@ -704,6 +725,7 @@ class OT_ImportModels(Operator):
                     errors += 1
                 OT_ImportModels.hideNewObjects(old_objects)
                 OT_ImportModels.moveNewObjectsToNewCollection(old_objects, filePath.name)
+                OT_ImportModels.joinAllNewObjects(old_objects)
         # Import GLTF files
         if tool.import_gltf == True:
             gltfFilePaths = [x for x in p.glob('**/*.gltf') if x.is_file()] # Get filepaths of files with the extension .gltf in the selected directory (and subdirs, recursively)
@@ -717,6 +739,7 @@ class OT_ImportModels(Operator):
                     errors += 1
                 OT_ImportModels.hideNewObjects(old_objects)
                 OT_ImportModels.moveNewObjectsToNewCollection(old_objects, filePath.name)
+                OT_ImportModels.joinAllNewObjects(old_objects)
         # Import OBJ files
         if tool.import_obj == True:
             objFilePaths = [x for x in p.glob('**/*.obj') if x.is_file()] # Get filepaths of files with the extension .obj in the selected directory (and subdirs, recursively)
@@ -730,6 +753,7 @@ class OT_ImportModels(Operator):
                     errors += 1
                 OT_ImportModels.hideNewObjects(old_objects)
                 OT_ImportModels.moveNewObjectsToNewCollection(old_objects, filePath.name)
+                OT_ImportModels.joinAllNewObjects(old_objects)
         # Import X3D files
         if tool.import_x3d == True:
             x3dFilePaths = [x for x in p.glob('**/*.x3d') if x.is_file()] # Get filepaths of files with the extension .x3d in the selected directory (and subdirs, recursively)
@@ -743,6 +767,7 @@ class OT_ImportModels(Operator):
                     errors += 1
                 OT_ImportModels.hideNewObjects(old_objects)
                 OT_ImportModels.moveNewObjectsToNewCollection(old_objects, filePath.name)
+                OT_ImportModels.joinAllNewObjects(old_objects)
         if errors == 0:
             DisplayMessageBox("Complete, {0} models imported".format(imported))
         else:
@@ -789,6 +814,14 @@ class OT_BatchAppend(Operator):
                         if obj.type == 'LIGHT':
                             bpy.data.objects.remove(obj)
                             removed = True
+                # Join objects if option turned on
+                if tool.append_join_new_objects:
+                    bpy.ops.object.select_all(action='DESELECT')
+                    for obj in data_to.objects:
+                        bpy.context.view_layer.objects.active = obj
+                        obj.select_set(True)
+                    bpy.ops.object.join()
+                    
             if tool.appendType == 'materials':
                 with bpy.data.libraries.load(str(path), link=link) as (data_from, data_to):
                     data_to.materials = data_from.materials
@@ -1182,6 +1215,7 @@ class OBJECT_PT_panel(Panel):
                 modelImportBox.label(text="Model options:")
                 modelImportBox.prop(tool, "hide_after_import")
                 modelImportBox.prop(tool, "move_to_new_collection_after_import")
+                modelImportBox.prop(tool, "join_new_objects")
                 modelImportBox.separator()
                 modelImportBox.label(text="Search for and import the following filetypes:")
                 modelImportBox.prop(tool, "import_fbx")
@@ -1203,6 +1237,7 @@ class OBJECT_PT_panel(Panel):
             appendBox.label(text='Make sure to uncheck "Relative Path"!', icon="ERROR")
             appendBox.prop(tool, "append_recursive_search")
             appendBox.prop(tool, "append_move_to_new_collection_after_import")
+            appendBox.prop(tool, "append_join_new_objects")
             appendBox.prop(tool, "appendType")
             if obj.appendType == 'objects':
                 appendBox.prop(tool, "deleteLights")
