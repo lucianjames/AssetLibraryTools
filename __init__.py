@@ -663,6 +663,17 @@ class OT_ImportModels(Operator):
             for object in imported_objects:
                 object.hide_set(True)
     
+    def moveNewObjectsToNewCollection(old_objects, collName):
+        scene = bpy.context.scene
+        tool = scene.assetlibrarytools
+        imported_objects = set(bpy.context.scene.objects) - old_objects
+        newCollection = bpy.data.collections.new(collName)
+        bpy.context.scene.collection.children.link(newCollection)
+        for obj in imported_objects:
+            for uc in obj.users_collection:
+                uc.objects.unlink(obj)
+            newCollection.objects.link(obj)
+    
     def execute(self, context):
         scene = context.scene
         tool = scene.assetlibrarytools
@@ -680,6 +691,8 @@ class OT_ImportModels(Operator):
                 except:
                     print("FBX import error")
                     errors += 1
+                OT_ImportModels.hideNewObjects(old_objects)
+                OT_ImportModels.moveNewObjectsToNewCollection(old_objects, filePath.name)
         # Import GLTF files
         if tool.import_gltf == True:
             gltfFilePaths = [x for x in p.glob('**/*.gltf') if x.is_file()] # Get filepaths of files with the extension .gltf in the selected directory (and subdirs, recursively)
@@ -692,6 +705,7 @@ class OT_ImportModels(Operator):
                     print("GLTF import error")
                     errors += 1
                 OT_ImportModels.hideNewObjects(old_objects)
+                OT_ImportModels.moveNewObjectsToNewCollection(old_objects, filePath.name)
         # Import OBJ files
         if tool.import_obj == True:
             objFilePaths = [x for x in p.glob('**/*.obj') if x.is_file()] # Get filepaths of files with the extension .obj in the selected directory (and subdirs, recursively)
@@ -704,6 +718,7 @@ class OT_ImportModels(Operator):
                     print("OBJ import error")
                     errors += 1
                 OT_ImportModels.hideNewObjects(old_objects)
+                OT_ImportModels.moveNewObjectsToNewCollection(old_objects, filePath.name)
         # Import X3D files
         if tool.import_x3d == True:
             x3dFilePaths = [x for x in p.glob('**/*.x3d') if x.is_file()] # Get filepaths of files with the extension .x3d in the selected directory (and subdirs, recursively)
@@ -716,6 +731,7 @@ class OT_ImportModels(Operator):
                     print("X3D import error")
                     errors += 1
                 OT_ImportModels.hideNewObjects(old_objects)
+                OT_ImportModels.moveNewObjectsToNewCollection(old_objects, filePath.name)
         if errors == 0:
             DisplayMessageBox("Complete, {0} models imported".format(imported))
         else:
@@ -740,12 +756,14 @@ class OT_BatchAppend(Operator):
                 # link all objects
                 with bpy.data.libraries.load(str(path), link=link) as (data_from, data_to):
                     data_to.objects = data_from.objects
-                #link object to current scene
+                # Create new collection
+                newCollection = bpy.data.collections.new(str(path.name))
+                bpy.context.scene.collection.children.link(newCollection)
+                #link object to collection
                 for obj in data_to.objects:
                     removed = False
-                    if obj is not None:
-                       #bpy.context.scene.objects.link(obj) # Blender 2.7x
-                       bpy.context.collection.objects.link(obj) # Blender 2.8x   
+                    if obj != None:
+                       newCollection.objects.link(obj)
                     # remove cameras
                     if removed == False and tool.deleteCameras == True: # This stops an error from occuring if obj is already deleted
                         if obj.type == 'CAMERA':
