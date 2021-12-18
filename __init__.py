@@ -359,6 +359,11 @@ class properties(PropertyGroup):
         description = "Reduces viewport polycount, prevents low framerate/crashes.\nHides each model individually straight after import",
         default = False
         )
+    move_to_new_collection_after_import : BoolProperty(
+        name = "Move models to new collection after import",
+        description = "",
+        default = False
+        )
     import_fbx : BoolProperty(
         name = "Import FBX files",
         description = "",
@@ -391,6 +396,11 @@ class properties(PropertyGroup):
         )
     append_recursive_search : BoolProperty(
         name = "Search for .blend files in subdirs recursively",
+        description = "",
+        default = False
+        )
+    append_move_to_new_collection_after_import : BoolProperty(
+        name = "Move objects to new collection after import",
         description = "",
         default = False
         )
@@ -658,21 +668,22 @@ class OT_ImportModels(Operator):
     def hideNewObjects(old_objects):
         scene = bpy.context.scene
         tool = scene.assetlibrarytools
-        imported_objects = set(bpy.context.scene.objects) - old_objects
         if tool.hide_after_import == True:
+            imported_objects = set(bpy.context.scene.objects) - old_objects
             for object in imported_objects:
                 object.hide_set(True)
     
     def moveNewObjectsToNewCollection(old_objects, collName):
         scene = bpy.context.scene
         tool = scene.assetlibrarytools
-        imported_objects = set(bpy.context.scene.objects) - old_objects
-        newCollection = bpy.data.collections.new(collName)
-        bpy.context.scene.collection.children.link(newCollection)
-        for obj in imported_objects:
-            for uc in obj.users_collection:
-                uc.objects.unlink(obj)
-            newCollection.objects.link(obj)
+        if tool.move_to_new_collection_after_import == True: 
+            imported_objects = set(bpy.context.scene.objects) - old_objects
+            newCollection = bpy.data.collections.new(collName)
+            bpy.context.scene.collection.children.link(newCollection)
+            for obj in imported_objects:
+                for uc in obj.users_collection:
+                    uc.objects.unlink(obj)
+                newCollection.objects.link(obj)
     
     def execute(self, context):
         scene = context.scene
@@ -757,13 +768,17 @@ class OT_BatchAppend(Operator):
                 with bpy.data.libraries.load(str(path), link=link) as (data_from, data_to):
                     data_to.objects = data_from.objects
                 # Create new collection
-                newCollection = bpy.data.collections.new(str(path.name))
-                bpy.context.scene.collection.children.link(newCollection)
+                if tool.append_move_to_new_collection_after_import:
+                    newCollection = bpy.data.collections.new(str(path.name))
+                    bpy.context.scene.collection.children.link(newCollection)
                 #link object to collection
                 for obj in data_to.objects:
                     removed = False
                     if obj != None:
-                       newCollection.objects.link(obj)
+                        if tool.append_move_to_new_collection_after_import:
+                            newCollection.objects.link(obj)
+                        else:
+                            bpy.context.collection.objects.link(obj)
                     # remove cameras
                     if removed == False and tool.deleteCameras == True: # This stops an error from occuring if obj is already deleted
                         if obj.type == 'CAMERA':
@@ -1166,6 +1181,7 @@ class OBJECT_PT_panel(Panel):
                 modelImportOptionsRow = modelImportBox.row()
                 modelImportBox.label(text="Model options:")
                 modelImportBox.prop(tool, "hide_after_import")
+                modelImportBox.prop(tool, "move_to_new_collection_after_import")
                 modelImportBox.separator()
                 modelImportBox.label(text="Search for and import the following filetypes:")
                 modelImportBox.prop(tool, "import_fbx")
@@ -1186,6 +1202,7 @@ class OBJECT_PT_panel(Panel):
             appendBox.prop(tool, "append_path")
             appendBox.label(text='Make sure to uncheck "Relative Path"!', icon="ERROR")
             appendBox.prop(tool, "append_recursive_search")
+            appendBox.prop(tool, "append_move_to_new_collection_after_import")
             appendBox.prop(tool, "appendType")
             if obj.appendType == 'objects':
                 appendBox.prop(tool, "deleteLights")
