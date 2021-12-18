@@ -390,7 +390,7 @@ class properties(PropertyGroup):
         subtype = 'DIR_PATH'
         )
     append_recursive_search : BoolProperty(
-        name = "Search for .blend files in surbdirs recursively",
+        name = "Search for .blend files in subdirs recursively",
         description = "",
         default = False
         )
