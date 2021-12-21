@@ -241,6 +241,8 @@ class shaderSetup():
         return mat
 
 
+# This code is bad!!!!
+# But i dont want to fix it!!!!
 def listDownloadAttribs(scene, context):
     scene = context.scene
     tool = scene.assetlibrarytools
