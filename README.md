@@ -1,3 +1,5 @@
+# I WILL NOT BE MAINTAINING THIS ADDON ANYMORE.
+
 # AssetLibraryTools
 
 AssetLibraryTools is a free addon which aims to speed up the process of creating asset libraries with the asset browser, This addon is currently very much experimental as is the asset browser in blender.
